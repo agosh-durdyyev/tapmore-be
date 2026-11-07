@@ -11,6 +11,8 @@ import { middleware } from '#start/kernel'
 import router from '@adonisjs/core/services/router'
 import { controllers } from '#generated/controllers'
 
+const Passwordless = () => import('#controllers/passwordless_controller')
+
 router.get('/health', () => ({ status: 'ok', service: 'tapmore-api' }))
 
 router
@@ -19,6 +21,11 @@ router
       .group(() => {
         router.post('signup', [controllers.NewAccount, 'store'])
         router.post('login', [controllers.AccessTokens, 'store'])
+        // Passwordless sign-in: one tap with Google or Apple, or a 6-digit email code.
+        router.post('google', [Passwordless, 'google'])
+        router.post('apple', [Passwordless, 'apple'])
+        router.post('email/code', [Passwordless, 'requestCode'])
+        router.post('email/verify', [Passwordless, 'verifyCode'])
       })
       .prefix('auth')
       .as('auth')

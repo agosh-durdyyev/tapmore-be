@@ -33,6 +33,12 @@ export default await Env.create(new URL('../', import.meta.url), {
   CLOUDFLARE_ACCOUNT_ID: Env.schema.string.optional(),
   CLOUDFLARE_IMAGES_TOKEN: Env.schema.secret.optional(),
 
+  // Passwordless sign-in. Comma-separated so web and iOS clients can share one backend.
+  GOOGLE_CLIENT_IDS: Env.schema.string.optional(),
+  APPLE_CLIENT_IDS: Env.schema.string.optional(),
+  RESEND_API_KEY: Env.schema.secret.optional(),
+  MAIL_FROM: Env.schema.string.optional(),
+
   // Session
   SESSION_DRIVER: Env.schema.enum(['cookie', 'memory', 'database'] as const),
 })
