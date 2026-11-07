@@ -3,11 +3,11 @@ import type { routes } from './index.ts'
 
 export interface ApiDefinition {
   auth: {
-    newAccount: {
-      store: typeof routes['auth.new_account.store']
-    }
-    accessTokens: {
-      store: typeof routes['auth.access_tokens.store']
+    passwordless: {
+      google: typeof routes['auth.passwordless.google']
+      apple: typeof routes['auth.passwordless.apple']
+      requestCode: typeof routes['auth.passwordless.request_code']
+      verifyCode: typeof routes['auth.passwordless.verify_code']
     }
   }
   profile: {
@@ -17,5 +17,18 @@ export interface ApiDefinition {
     accessTokens: {
       destroy: typeof routes['profile.access_tokens.destroy']
     }
+  }
+  pages: {
+    availability: typeof routes['pages.availability']
+    publicIndex: typeof routes['pages.public_index']
+    publicPage: typeof routes['pages.public_page']
+    show: typeof routes['pages.show']
+    update: typeof routes['pages.update']
+    publish: typeof routes['pages.publish']
+    unpublish: typeof routes['pages.unpublish']
+  }
+  images: {
+    store: typeof routes['images.store']
+    confirm: typeof routes['images.confirm']
   }
 }
