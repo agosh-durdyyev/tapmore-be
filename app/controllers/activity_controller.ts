@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
 import vine from '@vinejs/vine'
 import { activityCutoff, activityDays, purgeOldActivity } from '#services/activity_retention'
+import { countryFor } from '#services/geo'
 
 const eventValidator = vine.create({
   eventId: vine.string().uuid(),
@@ -26,13 +27,15 @@ export default class ActivityController {
         : null
     if (event.type === 'click' && !link)
       return response.unprocessableEntity({ code: 'LINK_NOT_FOUND' })
+    const ip = request.ip()
     await db
       .table('page_events')
       .insert({
         event_id: event.eventId,
         page_id: page.id,
         kind: event.type,
-        ip: request.ip(),
+        ip,
+        country: await countryFor(ip),
         link_id: link?.id ?? null,
         link_title: link?.title ?? null,
       })
@@ -73,7 +76,7 @@ export default class ActivityController {
       .orderBy('created_at', 'desc')
       .orderBy('id', 'desc')
       .limit(50)
-      .select('id', 'kind', 'ip', 'link_id', 'link_title', 'created_at')
+      .select('id', 'kind', 'ip', 'country', 'link_id', 'link_title', 'created_at')
     return {
       periodDays: activityDays,
       views: Number(totals.views),
@@ -84,6 +87,7 @@ export default class ActivityController {
         id: String(row.id),
         type: row.kind,
         ip: row.ip,
+        country: row.country,
         linkId: row.link_id,
         title: row.link_title,
         at: new Date(row.created_at).toISOString(),

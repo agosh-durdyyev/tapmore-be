@@ -15,7 +15,8 @@
     "test": "node ace test",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "geo:download": "node scripts/download_geoip.mjs"
   },
   "imports": {
     "#controllers/*": "./app/controllers/*.js",
@@ -66,6 +67,7 @@
     "@tuyau/core": "^1.2.2",
     "@vinejs/vine": "^4.4.0",
     "luxon": "^3.7.2",
+    "maxmind": "5.0.7",
     "obscenity": "0.4.6",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2"

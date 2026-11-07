@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { isIP } from 'node:net'
 import User from '#models/user'
 import db from '@adonisjs/lucid/services/db'
+import { geoOverride } from '#services/geo'
 
 const page = {
   username: 'activity-test',
@@ -31,7 +32,12 @@ const page = {
 }
 
 test.group('Public activity', (group) => {
+  group.teardown(() => {
+    geoOverride.current = null
+  })
   group.each.setup(async () => {
+    // Every test visitor resolves to Germany, so the country is recorded and returned.
+    geoOverride.current = { country: () => 'DE' }
     await db.from('rate_limits').delete()
     await db.from('pages').delete()
     await User.query().delete()
@@ -75,6 +81,7 @@ test.group('Public activity', (group) => {
     assert.lengthOf(body.events, 2)
     assert.isAbove(isIP(body.events[0].ip), 0)
     assert.notEqual(body.events[0].ip, '203.0.113.99')
+    assert.equal(body.events[0].country, 'DE')
     const others = await client.get('/api/v1/page/activity').loginAs(other)
     assert.lengthOf(others.body().events, 0)
     const publicPage = await client.get('/api/v1/public/pages/activity-test')

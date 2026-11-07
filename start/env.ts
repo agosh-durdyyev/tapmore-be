@@ -39,6 +39,9 @@ export default await Env.create(new URL('../', import.meta.url), {
   RESEND_API_KEY: Env.schema.secret.optional(),
   MAIL_FROM: Env.schema.string.optional(),
 
+  // Visitor countries. Defaults to geo/dbip-country-lite.mmdb (see scripts/download_geoip.mjs).
+  GEOIP_DB_PATH: Env.schema.string.optional(),
+
   // Session
   SESSION_DRIVER: Env.schema.enum(['cookie', 'memory', 'database'] as const),
 })

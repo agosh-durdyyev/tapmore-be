@@ -27,3 +27,6 @@ yarn-error.log
 
 # pnpm package cache
 .pnpm-store/
+
+# Downloaded GeoIP database (scripts/download_geoip.mjs)
+geo/
