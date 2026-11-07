@@ -11,6 +11,13 @@ import { middleware } from '#start/kernel'
 import router from '@adonisjs/core/services/router'
 import { controllers } from '#generated/controllers'
 
+// The bare address answers too, so opening api.tapmore.link doesn't look broken.
+router.get('/', () => ({
+  service: 'tapmore-api',
+  status: 'ok',
+  site: 'https://www.tapmore.link',
+  health: '/health',
+}))
 router.get('/health', () => ({ status: 'ok', service: 'tapmore-api' }))
 
 router
