@@ -76,6 +76,12 @@ test.group('Page lifecycle', (group) => {
     assert.equal(snapshot.body().page.name, 'Alex')
     const rename = await client.put('/api/v1/page').loginAs(user).json(page('alex-new'))
     rename.assertStatus(409)
+    const index = await client.get('/api/v1/public/pages')
+    index.assertStatus(200)
+    assert.deepEqual(
+      index.body().pages.map((row: { username: string }) => row.username),
+      ['alex']
+    )
     const unpublish = await client.delete('/api/v1/page/publish').loginAs(user)
     unpublish.assertStatus(204)
     const after = await client.get('/api/v1/public/pages/alex')

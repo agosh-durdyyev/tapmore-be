@@ -78,6 +78,20 @@ export default class PagesController {
     return response.noContent()
   }
 
+  /** Published addresses for the landing site's sitemap. Usernames only, nothing private. */
+  async publicIndex({ response }: HttpContext) {
+    const rows = await db
+      .from('pages')
+      .whereNotNull('published')
+      .orderBy('published_at', 'desc')
+      .limit(50000)
+      .select('username', 'published_at')
+    response.header('Cache-Control', 'public, max-age=3600')
+    return {
+      pages: rows.map((row) => ({ username: row.username, publishedAt: row.published_at })),
+    }
+  }
+
   async publicPage({ params, response }: HttpContext) {
     const row = await db
       .from('pages')

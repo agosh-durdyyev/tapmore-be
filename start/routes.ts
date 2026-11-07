@@ -42,6 +42,7 @@ const Images = () => import('#controllers/images_controller')
 router
   .group(() => {
     router.get('/usernames/:username', [Pages, 'availability'])
+    router.get('/public/pages', [Pages, 'publicIndex'])
     router.get('/public/pages/:username', [Pages, 'publicPage'])
     router
       .group(() => {
