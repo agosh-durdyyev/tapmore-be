@@ -38,10 +38,10 @@ test.group('Page lifecycle', (group) => {
 
   test('limits repeated authentication attempts', async ({ client }) => {
     for (let attempt = 0; attempt < 10; attempt++) {
-      const response = await client.post('/api/v1/auth/login').json({ email: '', password: '' })
+      const response = await client.post('/api/v1/auth/email/verify').json({ email: '', code: '' })
       response.assertStatus(422)
     }
-    const blocked = await client.post('/api/v1/auth/login').json({ email: '', password: '' })
+    const blocked = await client.post('/api/v1/auth/email/verify').json({ email: '', code: '' })
     blocked.assertStatus(429)
     blocked.assertHeader('retry-after', '60')
   })
@@ -115,28 +115,24 @@ test.group('Page lifecycle', (group) => {
     response.assertStatus(422)
   })
 
-  test('signup, login, and revocation work without exposing password hashes', async ({
+  test('password sign-up and login are gone', async ({ client }) => {
+    for (const path of ['/api/v1/auth/signup', '/api/v1/auth/login']) {
+      const response = await client
+        .post(path)
+        .json({ email: 'alex@example.com', password: 'long-password' })
+      response.assertStatus(404)
+    }
+  })
+
+  test('tokens reach the profile without exposing secrets, and logout revokes them', async ({
     client,
     assert,
   }) => {
-    const signup = await client.post('/api/v1/auth/signup').json({
-      fullName: 'Alex Morgan',
-      email: ' ALEX@example.com ',
-      password: 'long-password',
-      passwordConfirmation: 'long-password',
-    })
-    signup.assertStatus(200)
-    const data = signup.body().data
-    assert.equal(data.user.email, 'alex@example.com')
-    assert.notProperty(data.user, 'password')
-    assert.isString(data.token)
-    const login = await client
-      .post('/api/v1/auth/login')
-      .json({ email: 'alex@example.com', password: 'long-password' })
-    login.assertStatus(200)
-    const token = login.body().data.token
+    const user = await User.create({ email: 'alex@example.com', fullName: 'Alex Chen' })
+    const token = (await User.accessTokens.create(user)).value!.release()
     const profile = await client.get('/api/v1/account/profile').bearerToken(token)
     profile.assertStatus(200)
+    assert.notProperty(profile.body().data, 'password')
     const logout = await client.post('/api/v1/account/logout').bearerToken(token)
     logout.assertStatus(200)
     const revoked = await client.get('/api/v1/account/profile').bearerToken(token)

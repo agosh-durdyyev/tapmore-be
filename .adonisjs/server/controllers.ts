@@ -6,7 +6,6 @@
 export const controllers = {
   AccessTokens: () => import('#controllers/access_tokens_controller'),
   Images: () => import('#controllers/images_controller'),
-  NewAccount: () => import('#controllers/new_account_controller'),
   Pages: () => import('#controllers/pages_controller'),
   Passwordless: () => import('#controllers/passwordless_controller'),
   Profile: () => import('#controllers/profile_controller'),
