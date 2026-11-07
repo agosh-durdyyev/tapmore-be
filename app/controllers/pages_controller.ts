@@ -12,7 +12,8 @@ export default class PagesController {
   async show({ auth, response }: HttpContext) {
     const page = await db.from('pages').where('user_id', auth.getUserOrFail().id).first()
     if (!page) return response.notFound({ code: 'PAGE_NOT_FOUND' })
-    return { page: page.draft, publishedAt: page.published_at }
+    response.header('Cache-Control', 'no-store')
+    return { page: page.draft, published: page.published, publishedAt: page.published_at }
   }
 
   async update({ auth, request, response }: HttpContext) {

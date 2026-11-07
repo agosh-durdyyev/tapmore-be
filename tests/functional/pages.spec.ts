@@ -74,6 +74,15 @@ test.group('Page lifecycle', (group) => {
     edit.assertStatus(200)
     const snapshot = await client.get('/api/v1/public/pages/alex')
     assert.equal(snapshot.body().page.name, 'Alex')
+    const accountPage = await client.get('/api/v1/page').loginAs(user)
+    accountPage.assertStatus(200)
+    accountPage.assertHeader('cache-control', 'no-store')
+    const owned = accountPage.body()
+    if (!('published' in owned)) throw new Error('Missing published snapshot')
+    assert.equal(owned.page.name, 'Changed')
+    assert.equal(owned.published.name, 'Alex')
+    assert.lengthOf(owned.page.links, 2)
+    assert.lengthOf(owned.published.links, 2)
     const rename = await client.put('/api/v1/page').loginAs(user).json(page('alex-new'))
     rename.assertStatus(409)
     const index = await client.get('/api/v1/public/pages')
@@ -86,6 +95,13 @@ test.group('Page lifecycle', (group) => {
     unpublish.assertStatus(204)
     const after = await client.get('/api/v1/public/pages/alex')
     after.assertStatus(404)
+    const privatePage = await client.get('/api/v1/page').loginAs(user)
+    const privateBody = privatePage.body()
+    if (!('published' in privateBody)) throw new Error('Missing publication state')
+    assert.isNull(privateBody.published)
+    assert.isNull(privateBody.publishedAt)
+    const renamed = await client.put('/api/v1/page').loginAs(user).json(page('alex-new'))
+    renamed.assertStatus(200)
   })
 
   test('isolates accounts and rejects conflicting username claims', async ({ client, assert }) => {
@@ -119,6 +135,11 @@ test.group('Page lifecycle', (group) => {
     }
     const response = await client.put('/api/v1/page').loginAs(user).json({ version: 1, page: {} })
     response.assertStatus(422)
+    const photo = await client
+      .put('/api/v1/page')
+      .loginAs(user)
+      .json({ ...page('validname'), avatarUrl: 'javascript:alert(1)' })
+    photo.assertStatus(422)
   })
 
   test('password sign-up and login are gone', async ({ client }) => {

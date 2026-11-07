@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
 import CloudflareImages from '#services/cloudflare_images'
 
-test('allocates private uploads with short expiry and server-side authorization', async ({
+test('allocates public profile photo uploads with short expiry and server-side authorization', async ({
   assert,
 }) => {
   const fakeFetch: typeof fetch = async (input, init) => {
@@ -12,7 +12,7 @@ test('allocates private uploads with short expiry and server-side authorization'
     assert.equal((init?.headers as Record<string, string>).Authorization, 'Bearer secret')
     const body = init?.body as FormData
     assert.equal(body.get('creator'), '42')
-    assert.equal(body.get('requireSignedURLs'), 'true')
+    assert.equal(body.get('requireSignedURLs'), 'false')
     const expiry = new Date(String(body.get('expiry'))).getTime()
     assert.isAbove(expiry, Date.now())
     assert.isBelow(expiry, Date.now() + 11 * 60 * 1000)
@@ -48,4 +48,26 @@ test('confirmation verifies upload completion with Cloudflare', async ({ assert 
     Response.json({ success: true, result: { id: 'id', uploaded: new Date().toISOString() } })
   assert.isFalse(await new CloudflareImages('account', 'secret', pending).isUploaded('id'))
   assert.isTrue(await new CloudflareImages('account', 'secret', ready).isUploaded('id'))
+})
+
+test('public photo confirmation only returns completed HTTPS delivery variants', async ({
+  assert,
+}) => {
+  const provider = (result: Record<string, unknown>) =>
+    new CloudflareImages('account', 'secret', async () => Response.json({ success: true, result }))
+  assert.isNull(await provider({ draft: true }).publicUrl('id'))
+  assert.equal(
+    await provider({
+      uploaded: new Date().toISOString(),
+      variants: ['https://imagedelivery.net/hash/id/public'],
+    }).publicUrl('id'),
+    'https://imagedelivery.net/hash/id/public'
+  )
+  await assert.rejects(
+    () =>
+      provider({ uploaded: new Date().toISOString(), variants: ['javascript:bad'] }).publicUrl(
+        'id'
+      ),
+    'No public image variant is available'
+  )
 })

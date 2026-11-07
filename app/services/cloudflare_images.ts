@@ -33,7 +33,8 @@ export default class CloudflareImages {
 
   async createUpload(userId: number) {
     const body = new FormData()
-    body.set('requireSignedURLs', 'true')
+    // Profile photos are public assets; upload allocation remains authenticated.
+    body.set('requireSignedURLs', 'false')
     body.set('creator', String(userId))
     body.set('expiry', new Date(Date.now() + 10 * 60 * 1000).toISOString())
     const result = await this.call('v2/direct_upload', { method: 'POST', body })
@@ -45,5 +46,17 @@ export default class CloudflareImages {
   async isUploaded(id: string) {
     const result = await this.call(`v1/${encodeURIComponent(id)}`)
     return result.draft !== true && typeof result.uploaded === 'string'
+  }
+
+  async publicUrl(id: string) {
+    const result = await this.call(`v1/${encodeURIComponent(id)}`)
+    if (result.draft === true || typeof result.uploaded !== 'string') return null
+    const variants = Array.isArray(result.variants) ? result.variants : []
+    const url =
+      variants.find((value) => typeof value === 'string' && value.endsWith('/public')) ??
+      variants[0]
+    if (typeof url !== 'string' || !url.startsWith('https://imagedelivery.net/'))
+      throw new CloudflareImagesError('No public image variant is available')
+    return url
   }
 }

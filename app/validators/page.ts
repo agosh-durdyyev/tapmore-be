@@ -38,6 +38,12 @@ export const pageValidator = vine.create({
   username: usernameField(),
   bio: vine.string().trim().maxLength(500),
   initials: vine.string().trim().maxLength(4),
+  avatarUrl: vine
+    .string()
+    .trim()
+    .maxLength(2048)
+    .url({ protocols: ['http', 'https'], require_protocol: true })
+    .optional(),
   theme: vine.enum(['lilac', 'sand', 'mint']),
   links: vine
     .array(

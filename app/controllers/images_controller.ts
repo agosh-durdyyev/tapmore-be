@@ -40,10 +40,10 @@ export default class ImagesController {
     const provider = this.provider()
     if (!provider) return response.serviceUnavailable({ code: 'IMAGES_NOT_CONFIGURED' })
     try {
-      if (!(await provider.isUploaded(image.id)))
-        return response.conflict({ code: 'IMAGE_UPLOAD_INCOMPLETE' })
+      const url = await provider.publicUrl(image.id)
+      if (!url) return response.conflict({ code: 'IMAGE_UPLOAD_INCOMPLETE' })
       await db.from('images').where('id', image.id).update({ status: 'ready' })
-      return { id: image.id, status: 'ready' }
+      return { id: image.id, status: 'ready', url }
     } catch (error) {
       if (error instanceof CloudflareImagesError)
         return response.badGateway({ code: 'IMAGE_PROVIDER_UNAVAILABLE' })
