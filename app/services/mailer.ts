@@ -38,10 +38,22 @@ export class ResendMailer implements Mailer {
         }),
         signal: AbortSignal.timeout(10000),
       })
-    } catch {
+    } catch (error) {
+      const reason = error instanceof Error ? `${error.name}: ${error.message}` : String(error)
+      logger.error({ provider: 'resend', reason }, 'Login code email could not reach Resend')
       throw new MailerError('Email provider unavailable')
     }
-    if (!response.ok) throw new MailerError('Email provider rejected the message')
+    if (!response.ok) {
+      // Resend explains rejections in the body (unverified domain, invalid key, sandbox limits…).
+      // The body never contains the code; only the request does.
+      const body = await response.text().catch(() => '')
+      const detail = body.slice(0, 1000)
+      logger.error(
+        { provider: 'resend', status: response.status, detail, from: this.from },
+        'Resend rejected the login code email'
+      )
+      throw new MailerError('Email provider rejected the message')
+    }
   }
 }
 

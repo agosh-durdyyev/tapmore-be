@@ -1,6 +1,7 @@
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto'
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
+import logger from '@adonisjs/core/services/logger'
 import vine from '@vinejs/vine'
 import env from '#start/env'
 import User from '#models/user'
@@ -51,7 +52,10 @@ function mailer(): Mailer {
   if (mailerOverride.current) return mailerOverride.current
   const key = env.get('RESEND_API_KEY')?.release()
   if (key) return new ResendMailer(key, env.get('MAIL_FROM', 'TapMore <hello@tapmore.link>'))
-  if (env.get('NODE_ENV') === 'production') throw new MailerError('Email is not configured')
+  if (env.get('NODE_ENV') === 'production') {
+    logger.error('RESEND_API_KEY is not set; login code emails cannot be sent')
+    throw new MailerError('Email is not configured')
+  }
   return new LogMailer()
 }
 
