@@ -46,14 +46,17 @@ router
 
 const Pages = () => import('#controllers/pages_controller')
 const Images = () => import('#controllers/images_controller')
+const Activity = () => import('#controllers/activity_controller')
 router
   .group(() => {
     router.get('/usernames/:username', [Pages, 'availability'])
     router.get('/public/pages', [Pages, 'publicIndex'])
     router.get('/public/pages/:username', [Pages, 'publicPage'])
+    router.post('/public/pages/:username/events', [Activity, 'store'])
     router
       .group(() => {
         router.get('/page', [Pages, 'show'])
+        router.get('/page/activity', [Activity, 'show'])
         router.put('/page', [Pages, 'update'])
         router.post('/page/publish', [Pages, 'publish'])
         router.delete('/page/publish', [Pages, 'unpublish'])

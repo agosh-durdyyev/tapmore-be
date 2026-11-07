@@ -38,6 +38,9 @@ importers:
       luxon:
         specifier: ^3.7.2
         version: 3.7.2
+      obscenity:
+        specifier: 0.4.6
+        version: 0.4.6
       pg:
         specifier: ^8.16.3
         version: 8.23.1
@@ -1875,6 +1878,10 @@ packages:
 
   object-to-formdata@5.0.0:
     resolution: {integrity: sha512-reALyBo3+Nq71Py5uto2tjdxoAun83YqNBqElAWMNiOwfQxAnpMQiFPpZEvRL3kjShxsiBhNY/ikLUbc42TZ1Q==}
+
+  obscenity@0.4.6:
+    resolution: {integrity: sha512-pHk7kNN7j3L3zGhhGnwxjvXIGsPpLrcZl2r58fqWh/V/rH6b/dafscj2sMmAY+A/9/wPsocLmimgGk2DKeKsFQ==}
+    engines: {node: '>=18.0.0'}
 
   on-exit-leak-free@2.1.2:
     resolution: {integrity: sha512-0eJJY6hXLGf1udHwfNftBqH+g73EU4B504nZeKpz1sYRKafAghwxEJunB2O7rDZkL4PGfsMVnTXZ2EjibbqcsA==}
@@ -4165,6 +4172,8 @@ snapshots:
   object-inspect@1.13.4: {}
 
   object-to-formdata@5.0.0: {}
+
+  obscenity@0.4.6: {}
 
   on-exit-leak-free@2.1.2: {}
 

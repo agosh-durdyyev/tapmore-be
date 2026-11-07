@@ -18,11 +18,17 @@ const corsConfig = defineConfig({
    * In production, keep an explicit allowlist (empty by default, so no
    * cross-origin browser access is allowed until configured).
    */
-  origin: env
-    .get('CORS_ORIGIN', '')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean),
+  origin: [
+    ...new Set([
+      'https://tapmore.link',
+      'https://www.tapmore.link',
+      ...env
+        .get('CORS_ORIGIN', '')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+    ]),
+  ],
 
   /**
    * HTTP methods accepted for cross-origin requests.

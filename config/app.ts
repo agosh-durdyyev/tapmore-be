@@ -1,6 +1,7 @@
 import env from '#start/env'
 import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/core/http'
+import { clientIp } from '#services/client_ip'
 
 /**
  * The app URL can be used in various places where you want to create absolute
@@ -13,6 +14,9 @@ export const appUrl = env.get('APP_URL')
  * The configuration settings used by the HTTP server
  */
 export const http = defineConfig({
+  getIp(request, originalFn) {
+    return clientIp(originalFn(), request.header('x-real-ip'), !!process.env.RAILWAY_ENVIRONMENT_ID)
+  },
   /**
    * Generate a unique request id for each incoming request.
    * Useful to correlate logs and debug a request flow.

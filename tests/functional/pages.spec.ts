@@ -151,6 +151,35 @@ test.group('Page lifecycle', (group) => {
     }
   })
 
+  test('moderation is enforced on API saves and legacy drafts at publication', async ({
+    client,
+    assert,
+  }) => {
+    const user = await User.create({ email: 'moderation@example.com' })
+    for (const patch of [{ name: 'Fuck off' }, { bio: 'f.u.c.k' }, { username: 'fuck-you' }]) {
+      const blocked = await client
+        .put('/api/v1/page')
+        .loginAs(user)
+        .json({ ...page('clean-name'), ...patch })
+      blocked.assertStatus(422)
+      blocked.assertBodyContains({ code: 'CONTENT_NOT_ALLOWED' })
+    }
+    const bad = page('clean-name')
+    bad.links[0].title = 'f4gg0t'
+    const blocked = await client.put('/api/v1/page').loginAs(user).json(bad)
+    blocked.assertStatus(422)
+    const availability = await client.get('/api/v1/usernames/fuck-you')
+    assert.isFalse(availability.body().available)
+    await db
+      .table('pages')
+      .insert({ user_id: user.id, username: 'clean-name', draft: JSON.stringify(bad) })
+    const publish = await client.post('/api/v1/page/publish').loginAs(user)
+    publish.assertStatus(422)
+    publish.assertBodyContains({ code: 'CONTENT_NOT_ALLOWED' })
+    const snapshot = await client.get('/api/v1/public/pages/clean-name')
+    snapshot.assertStatus(404)
+  })
+
   test('tokens reach the profile without exposing secrets, and logout revokes them', async ({
     client,
     assert,

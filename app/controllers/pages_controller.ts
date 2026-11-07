@@ -1,10 +1,13 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
 import { pageValidator, reservedUsernames, usernameValidator } from '#validators/page'
+import { contentIssues, textIssue } from '#services/content_policy'
 
 export default class PagesController {
   async availability({ params }: HttpContext) {
     const { username } = await usernameValidator.validate({ username: params.username })
+    if (textIssue(username.replace(/[_-]+/g, ' '), 'Your page address'))
+      return { username, available: false, reason: 'CONTENT_NOT_ALLOWED' }
     const exists = await db.from('pages').where('username', username).first()
     return { username, available: !reservedUsernames.has(username) && !exists }
   }
@@ -18,6 +21,9 @@ export default class PagesController {
 
   async update({ auth, request, response }: HttpContext) {
     const draft = await request.validateUsing(pageValidator)
+    const issues = contentIssues(draft)
+    if (issues.length)
+      return response.unprocessableEntity({ code: 'CONTENT_NOT_ALLOWED', errors: issues })
     if (reservedUsernames.has(draft.username))
       return response.conflict({ code: 'USERNAME_UNAVAILABLE' })
     const userId = auth.getUserOrFail().id
@@ -52,7 +58,7 @@ export default class PagesController {
   }
 
   async publish({ auth, response }: HttpContext) {
-    const page = await db.transaction(async (trx) => {
+    const result = await db.transaction(async (trx) => {
       const row = await trx
         .from('pages')
         .where('user_id', auth.getUserOrFail().id)
@@ -60,14 +66,18 @@ export default class PagesController {
         .first()
       if (!row) return null
       const draft = await pageValidator.validate(row.draft)
+      const issues = contentIssues(draft)
+      if (issues.length) return { issues }
       await trx
         .from('pages')
         .where('id', row.id)
         .update({ published: JSON.stringify(draft), published_at: new Date() })
-      return draft
+      return { page: draft }
     })
-    if (!page) return response.notFound({ code: 'PAGE_NOT_FOUND' })
-    return { username: page.username, published: true }
+    if (!result) return response.notFound({ code: 'PAGE_NOT_FOUND' })
+    if ('issues' in result)
+      return response.unprocessableEntity({ code: 'CONTENT_NOT_ALLOWED', errors: result.issues })
+    return { username: result.page.username, published: true }
   }
 
   async unpublish({ auth, response }: HttpContext) {
