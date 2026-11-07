@@ -86,8 +86,12 @@ export default class IdTokenVerifier {
       throw new IdTokenError('Unsupported token algorithm')
 
     // Providers rotate keys; refetch once if the kid is new to us.
-    let jwk = (await this.keys(config)).find((key) => key.kid === header.kid)
-    if (!jwk) jwk = (await this.keys(config, true)).find((key) => key.kid === header.kid)
+    const cached = await this.keys(config)
+    let jwk = cached.find((key) => key.kid === header.kid)
+    if (!jwk) {
+      const refreshed = await this.keys(config, true)
+      jwk = refreshed.find((key) => key.kid === header.kid)
+    }
     if (!jwk) throw new IdTokenError('Unknown signing key')
 
     const valid = verify(

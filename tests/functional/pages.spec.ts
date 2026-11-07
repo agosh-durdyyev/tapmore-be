@@ -185,7 +185,8 @@ test.group('Page lifecycle', (group) => {
     assert,
   }) => {
     const user = await User.create({ email: 'alex@example.com', fullName: 'Alex Chen' })
-    const token = (await User.accessTokens.create(user)).value!.release()
+    const accessToken = await User.accessTokens.create(user)
+    const token = accessToken.value!.release()
     const profile = await client.get('/api/v1/account/profile').bearerToken(token)
     profile.assertStatus(200)
     assert.notProperty(profile.body().data, 'password')

@@ -37,7 +37,9 @@ test.group('Passwordless email codes', (group) => {
     assert.isNull(user.password)
     assert.equal(user.fullName, 'Maya Chen')
 
-    const reused = await client.post('/api/v1/auth/email/verify').json({ email: 'maya@example.com', code })
+    const reused = await client
+      .post('/api/v1/auth/email/verify')
+      .json({ email: 'maya@example.com', code })
     reused.assertStatus(401)
   })
 
@@ -63,7 +65,9 @@ test.group('Passwordless email codes', (group) => {
       response.assertStatus(401)
     }
     await db.from('rate_limits').delete()
-    const locked = await client.post('/api/v1/auth/email/verify').json({ email: 'maya@example.com', code })
+    const locked = await client
+      .post('/api/v1/auth/email/verify')
+      .json({ email: 'maya@example.com', code })
     locked.assertStatus(401)
     locked.assertBodyContains({ code: 'TOO_MANY_ATTEMPTS' })
   })
@@ -74,10 +78,14 @@ test.group('Passwordless email codes', (group) => {
     await client.post('/api/v1/auth/email/code').json({ email: 'maya@example.com' })
     const second = inbox.get('maya@example.com')!
     if (first !== second) {
-      const old = await client.post('/api/v1/auth/email/verify').json({ email: 'maya@example.com', code: first })
+      const old = await client
+        .post('/api/v1/auth/email/verify')
+        .json({ email: 'maya@example.com', code: first })
       old.assertStatus(401)
     }
-    const fresh = await client.post('/api/v1/auth/email/verify').json({ email: 'maya@example.com', code: second })
+    const fresh = await client
+      .post('/api/v1/auth/email/verify')
+      .json({ email: 'maya@example.com', code: second })
     fresh.assertStatus(200)
   })
 })

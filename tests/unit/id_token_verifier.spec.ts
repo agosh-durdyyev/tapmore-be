@@ -68,7 +68,10 @@ test.group('IdTokenVerifier', () => {
     for (const [label, value, message] of cases) {
       const error = await verifier()
         .verify('google', value)
-        .then(() => null, (reason: Error) => reason)
+        .then(
+          () => null,
+          (reason: Error) => reason
+        )
       assert.match(error?.message ?? 'accepted', message, label)
     }
   })

@@ -26,7 +26,10 @@ const appleValidator = vine.create({
 const codeRequestValidator = vine.create({ email: email() })
 const codeVerifyValidator = vine.create({
   email: email(),
-  code: vine.string().trim().regex(/^\d{6}$/),
+  code: vine
+    .string()
+    .trim()
+    .regex(/^\d{6}$/),
   fullName: name(),
 })
 
@@ -60,7 +63,9 @@ function mailer(): Mailer {
 }
 
 function hashCode(address: string, code: string) {
-  return createHmac('sha256', env.get('APP_KEY').release()).update(`${address}:${code}`).digest('hex')
+  return createHmac('sha256', env.get('APP_KEY').release())
+    .update(`${address}:${code}`)
+    .digest('hex')
 }
 
 /**
@@ -137,8 +142,7 @@ export default class PasswordlessController {
       throw error
     }
     // An unverified email could belong to someone else's TapMore account.
-    if (!identity.emailVerified)
-      return response.unauthorized({ code: 'EMAIL_NOT_VERIFIED' })
+    if (!identity.emailVerified) return response.unauthorized({ code: 'EMAIL_NOT_VERIFIED' })
     const existed = await User.findBy('email', identity.email)
     const user = await accountFor(identity.email, fullName, identity)
     return serialize(await session(user, !existed))
@@ -163,7 +167,8 @@ export default class PasswordlessController {
     try {
       await mailer().sendLoginCode(address, code)
     } catch (error) {
-      if (error instanceof MailerError) return response.serviceUnavailable({ code: 'EMAIL_UNAVAILABLE' })
+      if (error instanceof MailerError)
+        return response.serviceUnavailable({ code: 'EMAIL_UNAVAILABLE' })
       throw error
     }
     // Same answer whether or not an account exists, so emails can't be probed.

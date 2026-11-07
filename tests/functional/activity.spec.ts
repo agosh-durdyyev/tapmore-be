@@ -80,15 +80,13 @@ test.group('Public activity', (group) => {
     const publicPage = await client.get('/api/v1/public/pages/activity-test')
     assert.notProperty(publicPage.body().page, 'events')
     const ownerPage = await db.from('pages').where('user_id', owner.id).firstOrFail()
-    await db
-      .table('page_events')
-      .insert({
-        event_id: randomUUID(),
-        page_id: ownerPage.id,
-        kind: 'view',
-        ip: '203.0.113.1',
-        created_at: new Date(Date.now() - 31 * 86400000),
-      })
+    await db.table('page_events').insert({
+      event_id: randomUUID(),
+      page_id: ownerPage.id,
+      kind: 'view',
+      ip: '203.0.113.1',
+      created_at: new Date(Date.now() - 31 * 86400000),
+    })
     await client.get('/api/v1/page/activity').loginAs(owner)
     const expired = await db
       .from('page_events')
