@@ -1,0 +1,9 @@
+node_modules
+.pnpm-store
+build
+tmp
+.env
+.env.*
+!.env.example
+.git
+coverage
