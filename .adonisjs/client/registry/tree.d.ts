@@ -18,6 +18,12 @@ export interface ApiDefinition {
       destroy: typeof routes['profile.access_tokens.destroy']
     }
   }
+  accountSettings: {
+    requestEmail: typeof routes['account_settings.request_email']
+    verifyEmail: typeof routes['account_settings.verify_email']
+    logoutAll: typeof routes['account_settings.logout_all']
+    destroy: typeof routes['account_settings.destroy']
+  }
   pages: {
     availability: typeof routes['pages.availability']
     publicIndex: typeof routes['pages.public_index']
@@ -47,6 +53,8 @@ export interface ApiDefinition {
     stop: typeof routes['experiments.stop']
   }
   images: {
+    index: typeof routes['images.index']
+    cleanup: typeof routes['images.cleanup']
     store: typeof routes['images.store']
     confirm: typeof routes['images.confirm']
   }

@@ -51,7 +51,7 @@ function idTokens() {
 /** Tests swap in a mailer that captures codes instead of sending them. */
 export const mailerOverride: { current: Mailer | null } = { current: null }
 
-function mailer(): Mailer {
+export function mailer(): Mailer {
   if (mailerOverride.current) return mailerOverride.current
   const key = env.get('RESEND_API_KEY')?.release()
   if (key) return new ResendMailer(key, env.get('MAIL_FROM', 'TapMore <hello@tapmore.link>'))

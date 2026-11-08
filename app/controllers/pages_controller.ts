@@ -1,4 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import { linkActive, validSchedule } from '#services/link_schedule'
 import db from '@adonisjs/lucid/services/db'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import {
@@ -39,6 +40,8 @@ export default class PagesController {
    */
   async update({ auth, request, response }: HttpContext) {
     const draft = await request.validateUsing(draftValidator)
+    if (draft.links.some((link) => !validSchedule(link)))
+      return response.unprocessableEntity({ code: 'INVALID_SCHEDULE' })
     const issues = contentIssues(draft)
     if (issues.length)
       return response.unprocessableEntity({ code: 'CONTENT_NOT_ALLOWED', errors: issues })
@@ -83,6 +86,8 @@ export default class PagesController {
       if (!row) return null
       if (!row.draft.username) return { error: 'USERNAME_REQUIRED' as const }
       const draft = await pageValidator.validate(row.draft)
+      if (draft.links.some((link) => !validSchedule(link)))
+        return { error: 'INVALID_SCHEDULE' as const }
       const issues = contentIssues(draft)
       if (issues.length) return { issues }
       if ((await claimUsername(trx, row, draft.username)) !== draft.username)
@@ -106,7 +111,7 @@ export default class PagesController {
     if ('issues' in result)
       return response.unprocessableEntity({ code: 'CONTENT_NOT_ALLOWED', errors: result.issues })
     if ('error' in result)
-      return result.error === 'USERNAME_REQUIRED'
+      return result.error === 'USERNAME_REQUIRED' || result.error === 'INVALID_SCHEDULE'
         ? response.unprocessableEntity({ code: result.error })
         : response.conflict({ code: result.error })
     return { username: result.page.username, published: true, version: result.version }
@@ -166,7 +171,7 @@ export default class PagesController {
     return {
       page: {
         ...content,
-        links: content.links.filter((link: { visible: boolean }) => link.visible),
+        links: content.links.filter((link: Parameters<typeof linkActive>[0]) => linkActive(link)),
       },
       variant: variant?.id ?? null,
     }

@@ -1,4 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import { linkActive, type Schedule } from '#services/link_schedule'
 import db from '@adonisjs/lucid/services/db'
 import vine from '@vinejs/vine'
 import { activityCutoff, activityDays, purgeOldActivity } from '#services/activity_retention'
@@ -38,7 +39,8 @@ export default class ActivityController {
     const link =
       event.type === 'click'
         ? shown.links.find(
-            (value: { id: string; visible: boolean }) => value.id === event.linkId && value.visible
+            (value: Schedule & { id: string; visible: boolean }) =>
+              value.id === event.linkId && linkActive(value)
           )
         : null
     if (event.type === 'click' && !link)

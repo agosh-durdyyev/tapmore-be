@@ -71,3 +71,21 @@ test('public photo confirmation only returns completed HTTPS delivery variants',
     'No public image variant is available'
   )
 })
+
+test('permanent image deletion is authenticated and safely retryable', async ({ assert }) => {
+  const provider = new CloudflareImages('account', 'secret', async (url, init) => {
+    assert.equal(
+      String(url),
+      'https://api.cloudflare.com/client/v4/accounts/account/images/v1/image'
+    )
+    assert.equal(init?.method, 'DELETE')
+    assert.equal((init?.headers as Record<string, string>).Authorization, 'Bearer secret')
+    return new Response(null, { status: 404 })
+  })
+  await provider.delete('image')
+  await assert.rejects(() =>
+    new CloudflareImages('account', 'secret', async () =>
+      Response.json({ success: false }, { status: 503 })
+    ).delete('image')
+  )
+})

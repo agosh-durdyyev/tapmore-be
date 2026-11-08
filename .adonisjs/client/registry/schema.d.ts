@@ -86,6 +86,58 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/access_tokens_controller').default['destroy']>>>
     }
   }
+  'account_settings.request_email': {
+    methods: ["POST"]
+    pattern: '/api/v1/account/email'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/account_settings_controller').default['requestEmail']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account_settings_controller').default['requestEmail']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/account_settings_controller').default['requestEmail']>>>
+    }
+  }
+  'account_settings.verify_email': {
+    methods: ["POST"]
+    pattern: '/api/v1/account/email/verify'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/account_settings_controller').default['verifyEmail']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account_settings_controller').default['verifyEmail']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/account_settings_controller').default['verifyEmail']>>>
+    }
+  }
+  'account_settings.logout_all': {
+    methods: ["POST"]
+    pattern: '/api/v1/account/logout-all'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/account_settings_controller').default['logoutAll']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account_settings_controller').default['logoutAll']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/account_settings_controller').default['logoutAll']>>>
+    }
+  }
+  'account_settings.destroy': {
+    methods: ["DELETE"]
+    pattern: '/api/v1/account'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/account_settings_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account_settings_controller').default['destroy']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/account_settings_controller').default['destroy']>>>
+    }
+  }
   'pages.availability': {
     methods: ["GET","HEAD"]
     pattern: '/api/v1/usernames/:username'
@@ -318,6 +370,32 @@ export interface Registry {
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/experiments_controller').default['stop']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/experiments_controller').default['stop']>>>
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/experiments_controller').default['stop']>>>
+    }
+  }
+  'images.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/api/v1/images'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/images_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/images_controller').default['index']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/images_controller').default['index']>>>
+    }
+  }
+  'images.cleanup': {
+    methods: ["POST"]
+    pattern: '/api/v1/images/cleanup'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/images_controller').default['cleanup']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/images_controller').default['cleanup']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/images_controller').default['cleanup']>>>
     }
   }
   'images.store': {

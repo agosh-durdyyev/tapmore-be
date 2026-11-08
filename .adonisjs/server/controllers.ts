@@ -5,6 +5,7 @@
 
 export const controllers = {
   AccessTokens: () => import('#controllers/access_tokens_controller'),
+  AccountSettings: () => import('#controllers/account_settings_controller'),
   Activity: () => import('#controllers/activity_controller'),
   Ai: () => import('#controllers/ai_controller'),
   Experiments: () => import('#controllers/experiments_controller'),

@@ -3,7 +3,7 @@ import logger from '@adonisjs/core/services/logger'
 export class MailerError extends Error {}
 
 export interface Mailer {
-  sendLoginCode(email: string, code: string): Promise<void>
+  sendLoginCode(email: string, code: string, purpose?: 'email-change'): Promise<void>
 }
 
 /**
@@ -17,7 +17,7 @@ export class ResendMailer implements Mailer {
     private transport: typeof fetch = fetch
   ) {}
 
-  async sendLoginCode(email: string, code: string) {
+  async sendLoginCode(email: string, code: string, purpose?: 'email-change') {
     let response: Response
     try {
       response = await this.transport('https://api.resend.com/emails', {
@@ -31,7 +31,9 @@ export class ResendMailer implements Mailer {
           to: [email],
           subject: `${code} is your TapMore code`,
           text: [
-            `Your TapMore sign-in code is ${code}.`,
+            purpose === 'email-change'
+              ? `Your TapMore email-change verification code is ${code}.`
+              : `Your TapMore sign-in code is ${code}.`,
             '',
             'It expires in 10 minutes. If you didn’t ask for it, you can ignore this email.',
           ].join('\n'),
@@ -59,7 +61,7 @@ export class ResendMailer implements Mailer {
 
 /** Development fallback: prints the code to the server log instead of emailing it. */
 export class LogMailer implements Mailer {
-  async sendLoginCode(email: string, code: string) {
-    logger.info({ email }, `TapMore sign-in code for ${email}: ${code}`)
+  async sendLoginCode(email: string, code: string, purpose?: 'email-change') {
+    logger.info({ email }, `TapMore ${purpose ?? 'sign-in'} code for ${email}: ${code}`)
   }
 }

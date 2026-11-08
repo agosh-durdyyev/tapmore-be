@@ -1,8 +1,17 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import env from '#start/env'
+import { unusedImages } from '#services/image_cleanup'
 import db from '@adonisjs/lucid/services/db'
 import CloudflareImages, { CloudflareImagesError } from '#services/cloudflare_images'
 export default class ImagesController {
+  async index({ auth, response }: HttpContext) {
+    response.header('Cache-Control', 'no-store')
+    return unusedImages(auth.getUserOrFail().id)
+  }
+  async cleanup({ auth }: HttpContext) {
+    const result = await unusedImages(auth.getUserOrFail().id, true)
+    return { ...result, queued: result.eligible }
+  }
   private provider() {
     const account = env.get('CLOUDFLARE_ACCOUNT_ID')
     const token = env.get('CLOUDFLARE_IMAGES_TOKEN')

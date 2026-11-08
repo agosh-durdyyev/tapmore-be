@@ -44,6 +44,17 @@ router
   })
   .prefix('/api/v1')
 
+const AccountSettings = () => import('#controllers/account_settings_controller')
+router
+  .group(() => {
+    router.post('/email', [AccountSettings, 'requestEmail'])
+    router.post('/email/verify', [AccountSettings, 'verifyEmail'])
+    router.post('/logout-all', [AccountSettings, 'logoutAll'])
+    router.delete('/', [AccountSettings, 'destroy'])
+  })
+  .prefix('/api/v1/account')
+  .use(middleware.auth())
+
 const Pages = () => import('#controllers/pages_controller')
 const Images = () => import('#controllers/images_controller')
 const Activity = () => import('#controllers/activity_controller')
@@ -75,6 +86,8 @@ router
         router.get('/page/experiment', [Experiments, 'show'])
         router.post('/page/experiment', [Experiments, 'store'])
         router.post('/page/experiment/stop', [Experiments, 'stop'])
+        router.get('/images', [Images, 'index'])
+        router.post('/images/cleanup', [Images, 'cleanup'])
         router.post('/images/uploads', [Images, 'store'])
         router.post('/images/:id/confirm', [Images, 'confirm'])
       })

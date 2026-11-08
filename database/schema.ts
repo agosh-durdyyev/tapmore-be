@@ -47,6 +47,21 @@ export class AuthIdentitySchema extends BaseModel {
   declare userId: number
 }
 
+export class EmailChangeSchema extends BaseModel {
+  static $columns = ['attempts', 'codeHash', 'email', 'expiresAt', 'userId'] as const
+  $columns = EmailChangeSchema.$columns
+  @column()
+  declare attempts: number
+  @column()
+  declare codeHash: string
+  @column()
+  declare email: string
+  @column.dateTime()
+  declare expiresAt: DateTime
+  @column({ isPrimary: true })
+  declare userId: number
+}
+
 export class ExperimentVariantSchema extends BaseModel {
   static $columns = ['experimentId', 'id', 'label', 'versionId', 'weight'] as const
   $columns = ExperimentVariantSchema.$columns
@@ -77,6 +92,17 @@ export class ExperimentSchema extends BaseModel {
   declare startedAt: DateTime
   @column()
   declare status: string
+}
+
+export class ImageDeletionSchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'ownerId'] as const
+  $columns = ImageDeletionSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare ownerId: number | null
 }
 
 export class ImageSchema extends BaseModel {

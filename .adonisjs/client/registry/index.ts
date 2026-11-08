@@ -44,6 +44,30 @@ const routes = {
     tokens: [[0,"api"],[0,"v1"],[0,"account"],[0,"logout"]],
     types: placeholder as Registry['profile.access_tokens.destroy']['types'],
   },
+  'account_settings.request_email': {
+    methods: ["POST"],
+    pattern: '/api/v1/account/email',
+    tokens: [[0,"api"],[0,"v1"],[0,"account"],[0,"email"]],
+    types: placeholder as Registry['account_settings.request_email']['types'],
+  },
+  'account_settings.verify_email': {
+    methods: ["POST"],
+    pattern: '/api/v1/account/email/verify',
+    tokens: [[0,"api"],[0,"v1"],[0,"account"],[0,"email"],[0,"verify"]],
+    types: placeholder as Registry['account_settings.verify_email']['types'],
+  },
+  'account_settings.logout_all': {
+    methods: ["POST"],
+    pattern: '/api/v1/account/logout-all',
+    tokens: [[0,"api"],[0,"v1"],[0,"account"],[0,"logout-all"]],
+    types: placeholder as Registry['account_settings.logout_all']['types'],
+  },
+  'account_settings.destroy': {
+    methods: ["DELETE"],
+    pattern: '/api/v1/account',
+    tokens: [[0,"api"],[0,"v1"],[0,"account"]],
+    types: placeholder as Registry['account_settings.destroy']['types'],
+  },
   'pages.availability': {
     methods: ["GET","HEAD"],
     pattern: '/api/v1/usernames/:username',
@@ -151,6 +175,18 @@ const routes = {
     pattern: '/api/v1/page/experiment/stop',
     tokens: [[0,"api"],[0,"v1"],[0,"page"],[0,"experiment"],[0,"stop"]],
     types: placeholder as Registry['experiments.stop']['types'],
+  },
+  'images.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/api/v1/images',
+    tokens: [[0,"api"],[0,"v1"],[0,"images"]],
+    types: placeholder as Registry['images.index']['types'],
+  },
+  'images.cleanup': {
+    methods: ["POST"],
+    pattern: '/api/v1/images/cleanup',
+    tokens: [[0,"api"],[0,"v1"],[0,"images"],[0,"cleanup"]],
+    types: placeholder as Registry['images.cleanup']['types'],
   },
   'images.store': {
     methods: ["POST"],

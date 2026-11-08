@@ -10,6 +10,10 @@ export type ScannedRoutes = {
     'auth.passwordless.verify_code': { paramsTuple?: []; params?: {} }
     'profile.profile.show': { paramsTuple?: []; params?: {} }
     'profile.access_tokens.destroy': { paramsTuple?: []; params?: {} }
+    'account_settings.request_email': { paramsTuple?: []; params?: {} }
+    'account_settings.verify_email': { paramsTuple?: []; params?: {} }
+    'account_settings.logout_all': { paramsTuple?: []; params?: {} }
+    'account_settings.destroy': { paramsTuple?: []; params?: {} }
     'pages.availability': { paramsTuple: [ParamValue]; params: {'username': ParamValue} }
     'pages.public_index': { paramsTuple?: []; params?: {} }
     'pages.public_page': { paramsTuple: [ParamValue]; params: {'username': ParamValue} }
@@ -28,6 +32,8 @@ export type ScannedRoutes = {
     'experiments.show': { paramsTuple?: []; params?: {} }
     'experiments.store': { paramsTuple?: []; params?: {} }
     'experiments.stop': { paramsTuple?: []; params?: {} }
+    'images.index': { paramsTuple?: []; params?: {} }
+    'images.cleanup': { paramsTuple?: []; params?: {} }
     'images.store': { paramsTuple?: []; params?: {} }
     'images.confirm': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
@@ -41,6 +47,7 @@ export type ScannedRoutes = {
     'versions.index': { paramsTuple?: []; params?: {} }
     'versions.show': { paramsTuple: [ParamValue]; params: {'number': ParamValue} }
     'experiments.show': { paramsTuple?: []; params?: {} }
+    'images.index': { paramsTuple?: []; params?: {} }
   }
   HEAD: {
     'profile.profile.show': { paramsTuple?: []; params?: {} }
@@ -52,6 +59,7 @@ export type ScannedRoutes = {
     'versions.index': { paramsTuple?: []; params?: {} }
     'versions.show': { paramsTuple: [ParamValue]; params: {'number': ParamValue} }
     'experiments.show': { paramsTuple?: []; params?: {} }
+    'images.index': { paramsTuple?: []; params?: {} }
   }
   POST: {
     'auth.passwordless.google': { paramsTuple?: []; params?: {} }
@@ -59,6 +67,9 @@ export type ScannedRoutes = {
     'auth.passwordless.request_code': { paramsTuple?: []; params?: {} }
     'auth.passwordless.verify_code': { paramsTuple?: []; params?: {} }
     'profile.access_tokens.destroy': { paramsTuple?: []; params?: {} }
+    'account_settings.request_email': { paramsTuple?: []; params?: {} }
+    'account_settings.verify_email': { paramsTuple?: []; params?: {} }
+    'account_settings.logout_all': { paramsTuple?: []; params?: {} }
     'activity.store': { paramsTuple: [ParamValue]; params: {'username': ParamValue} }
     'ai.import': { paramsTuple?: []; params?: {} }
     'ai.suggest': { paramsTuple?: []; params?: {} }
@@ -67,14 +78,16 @@ export type ScannedRoutes = {
     'versions.restore': { paramsTuple: [ParamValue]; params: {'number': ParamValue} }
     'experiments.store': { paramsTuple?: []; params?: {} }
     'experiments.stop': { paramsTuple?: []; params?: {} }
+    'images.cleanup': { paramsTuple?: []; params?: {} }
     'images.store': { paramsTuple?: []; params?: {} }
     'images.confirm': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
+  DELETE: {
+    'account_settings.destroy': { paramsTuple?: []; params?: {} }
+    'pages.unpublish': { paramsTuple?: []; params?: {} }
+  }
   PUT: {
     'pages.update': { paramsTuple?: []; params?: {} }
-  }
-  DELETE: {
-    'pages.unpublish': { paramsTuple?: []; params?: {} }
   }
 }
 declare module '@adonisjs/core/types/http' {

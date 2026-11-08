@@ -72,6 +72,8 @@ const pageFields = () => ({
         category: vine.enum(['Explore', 'Learn', 'Shop', 'Connect']),
         featured: vine.boolean(),
         visible: vine.boolean(),
+        startsAt: vine.string().maxLength(24).optional(),
+        endsAt: vine.string().maxLength(24).optional(),
       })
     )
     .maxLength(100),

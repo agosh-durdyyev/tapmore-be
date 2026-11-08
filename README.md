@@ -1,101 +1,92 @@
 # TapMore backend
 
-AdonisJS 7 API, TypeScript, PostgreSQL, Lucid, VineJS, and Cloudflare Images.
-This checkout is the backend foundation. The existing landing and dashboard still use browser-local drafts and have not been connected to this API. No backend deployment has been created.
+AdonisJS 7, TypeScript, PostgreSQL, passwordless authentication, and Cloudflare Images.
+Requires Node.js 24+ and pnpm 11.25.0.
 
-## Local setup
-
-Use Node.js 24+ and pnpm 11.25.0. From this directory:
+## Local development
 
 ```sh
 pnpm install --frozen-lockfile
 cp .env.example .env
 node ace generate:key
-# Requires Docker; alternatively provide an existing PostgreSQL database in .env.
 docker compose up -d
 node ace migration:run
 pnpm dev
 ```
 
-`GET http://127.0.0.1:3333/health` checks process health, not database readiness.
-The Compose database is for local development only. Production needs its own credentials, TLS, backups, and explicit CORS origins. Configure trusted proxies for the deployment topology before relying on client IP rate limiting.
-
-## API contract
-
-Protected routes require `Authorization: Bearer <token>`. Auth tokens expire after seven days. Logout revokes the current token. Passwords are hashed using the framework's scrypt driver and excluded from responses.
-
-| Method | Path                             | Access / result                                                                                           |
-| ------ | -------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| POST   | `/api/v1/auth/signup`            | `fullName` (string or null), `email`, `password`, `passwordConfirmation`; returns `{data: {user, token}}` |
-| POST   | `/api/v1/auth/login`             | `email`, `password`; returns `{data: {user, token}}`                                                      |
-| GET    | `/api/v1/account/profile`        | Authenticated user, under `data`                                                                          |
-| POST   | `/api/v1/account/logout`         | Authenticated; revokes current token                                                                      |
-| GET    | `/api/v1/usernames/:username`    | `{username, available}`; availability is advisory                                                         |
-| GET    | `/api/v1/page`                   | Authenticated; `{page, publishedAt}`, or 404                                                              |
-| PUT    | `/api/v1/page`                   | Authenticated; saves validated page and atomically claims username                                        |
-| POST   | `/api/v1/page/publish`           | Authenticated; copies saved draft to published snapshot                                                   |
-| DELETE | `/api/v1/page/publish`           | Authenticated; unpublishes; 204                                                                           |
-| GET    | `/api/v1/public/pages/:username` | Published snapshot only; excludes hidden links                                                            |
-| POST   | `/api/v1/images/uploads`         | Authenticated; `{id, uploadURL}`; 503 when unconfigured                                                   |
-| POST   | `/api/v1/images/:id/confirm`     | Authenticated owner; verifies upload with Cloudflare                                                      |
-
-The page payload retains the POC shape:
-
-```json
-{
-  "name": "Alex Morgan",
-  "username": "alexmorgan",
-  "bio": "Designer and maker.",
-  "initials": "AM",
-  "theme": "mint",
-  "links": [
-    {
-      "id": "first-link",
-      "title": "Portfolio",
-      "url": "https://example.com",
-      "category": "Explore",
-      "featured": true,
-      "visible": true
-    }
-  ]
-}
-```
-
-Themes: `lilac`, `sand`, `mint`. Categories: `Explore`, `Learn`, `Shop`, `Connect`.
-Only HTTP(S) links are accepted. Maximum 100 links; name 100 characters; bio 500; link titles 160; URLs 2048. Empty bio and initials are supported. Backup envelopes must be unpacked by the client before sending their page.
-
-Usernames normalize to lowercase, use 3–24 letters/digits/underscores/hyphens, and start with a letter or digit. Reserved names and database uniqueness prevent claims; conflicts return 409. One page per user. A published username cannot change until unpublishing. Draft saves never change a published snapshot. Public responses use `Cache-Control: no-store` so unpublishing does not leave an application cache behind.
-
-Guest personalization remains browser-local and requires no account. At publishing, the client should authenticate, send its existing page to `PUT /page`, then explicitly call the publish endpoint. It must retain its local draft until saving succeeds. The public endpoint returns JSON; a rendered public profile route still needs frontend implementation.
-
-## Cloudflare Images
-
-Set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_IMAGES_TOKEN` in the server environment. Use a token limited to Images Write for the intended account; never put it in frontend configuration.
-
-1. Authenticated client requests an upload allocation.
-2. Server records the returned image ID against the user and returns the one-time URL.
-3. Client submits the file as multipart field `file` directly to `uploadURL`.
-4. Client calls the confirmation endpoint. The backend checks ownership and queries Cloudflare to verify completion.
-
-Allocations expire after ten minutes. Each account has a maximum of 50 tracked allocations, including abandoned ones. Uploads require signed delivery URLs, keeping draft media private. Attaching images to pages, signed delivery URL generation, image deletion, and abandoned-upload cleanup are follow-up work. No image delivery URLs or avatar integration are claimed here. Failed database writes after allocation may leave an expiring Cloudflare allocation; reconciliation is still needed. Live account behavior has not been verified without credentials.
-
-## Checks
+Use a dedicated database for tests: functional suites delete test data. `.env.test`
+selects `tapmore_test`; CI provisions an isolated PostgreSQL service.
 
 ```sh
+NODE_ENV=test node ace migration:run
 pnpm typecheck
 pnpm lint
 pnpm test
 pnpm build --package-manager=pnpm
 ```
 
-Functional tests delete records in the configured database. **Always use a dedicated test database.** CI creates an isolated PostgreSQL 17 service, runs migrations, then checks types, lint, tests, and production compilation. The workflow is added locally; it has not run on GitHub yet.
+## Features and API
 
-Local functional checks used PGlite (PostgreSQL WASM) through the PostgreSQL wire protocol with a one-connection pool (`DB_POOL_MAX=1`), because native PostgreSQL shared memory was blocked by the execution sandbox. This verifies SQL behavior but does not establish native PostgreSQL concurrency behavior. The native PostgreSQL CI run remains necessary.
+Routes live in `start/routes.ts`; requests and responses are implemented in
+`app/controllers`. All routes below use `/api/v1`. Account routes require a bearer
+token. Sessions last 90 days. Sign in through Google, Apple, or a six-digit email
+code; there is no password authentication.
 
-Rate limits use atomic PostgreSQL counters: 10 auth requests/minute per IP and 120 other API requests/minute per IP. Images additionally enforce the per-account quota. Expired counters should be periodically removed using `DELETE FROM rate_limits WHERE expires_at < CURRENT_TIMESTAMP`; tokens and orphaned images also need scheduled cleanup before launch.
+- `/auth/google`, `/auth/apple`, `/auth/email/code`, `/auth/email/verify`: passwordless sign-in.
+- `/account/profile`, `/account/logout`: current profile and current-session logout.
+- `POST /account/email`: send a code to a proposed new email address.
+- `POST /account/email/verify`: verify that code, change the email, disconnect old
+  social identities, and revoke all sessions. Email-change codes are scoped to
+  the account and cannot be used as login codes. Five guesses and a ten-minute expiry.
+- `POST /account/logout-all`: revoke all sessions for the current account.
+- `DELETE /account`: confirm with `{email}`; remove account data and queue uploaded
+  files for permanent deletion. Client-side copies on other devices remain.
+- `/page`: retrieve or save a private draft. `If-Match` revision checks prevent stale saves.
+- `/page/publish`: publish a snapshot, or DELETE to unpublish.
+- `/page/versions`: list/create snapshots; `/:number` reads one and `/:number/restore`
+  restores it to the draft. History retains up to 100 recent versions plus protected versions.
+- `/page/experiment`: weighted A/B tests of saved versions; `/stop` stops the test.
+- `/page/activity`: owner-only 30-day public visits and clicks.
+- `/public/pages/:username`: public snapshot or experiment variant, with inactive links excluded.
+- `/public/pages/:username/events`: public activity recording; inactive-link clicks are rejected.
+- `/public/pages`: published addresses for the sitemap.
+- `/images/uploads`, `/images/:id/confirm`: allocate and confirm authenticated uploads.
+- `GET /images`: upload count and number eligible for cleanup.
+- `POST /images/cleanup`: queue unused uploads older than 24 hours for deletion.
+- `/ai/import`, `/ai/suggest`: constrained, rate-limited imports and title/bio suggestions.
 
-## Remaining launch work
+## Link schedules
 
-Connect and migrate the frontends; render public profile pages; add browser authentication storage strategy, email verification and account recovery; wire private/public image delivery; validate concurrent username claims on native PostgreSQL; provision hosting and database; verify live Cloudflare uploads; add monitoring, backup recovery, and deployment checks. Custom domains and production analytics are not implemented.
+Links optionally include `startsAt` and `endsAt` as UTC ISO timestamps, for example
+`2026-11-08T09:00:00.000Z`. Start is inclusive; end is exclusive and must follow
+start. Either boundary may be omitted. `visible: false` always overrides the
+schedule. Drafts and history preserve these fields; public responses evaluate the
+schedule on each request, including experiment variants. Publishing is still explicit.
 
-Related repositories: [landing](https://github.com/agosh-durdyyev/tapmore-fe), [dashboard](https://github.com/agosh-durdyyev/tapmore-dashboard).
+## Media lifecycle
+
+Cloudflare credentials stay server-side. Upload allocations last ten minutes;
+photos have public delivery URLs. Accounts may track at most 50 uploads.
+
+The web process scans hourly for uploads older than 24 hours that are not referenced
+by the owner's saved draft, published page, or retained version history. Those
+uploads are queued for deletion. Unsaved browser drafts and downloaded backup files
+cannot protect their photos from cleanup. Queued images still count toward the
+quota until removal finishes. References are checked again before deletion.
+
+A durable `image_deletions` queue survives account deletion. The web process drains
+up to ten files each minute, retries provider failures, and treats a missing provider
+file as already deleted. Run migrations before starting the new build. Keep at least
+one API web process running with Cloudflare credentials for cleanup to progress;
+monitor the queue age and cleanup warnings. Provider delivery/cache invalidation is
+outside the database transaction.
+
+## Production operations
+
+Configure explicit CORS origins, trusted proxies, mail, social client IDs, Cloudflare,
+and optional Anthropic credentials using `.env.example`. `/health` checks the
+process, not database readiness. Use database TLS, backups, and restore drills.
+Analytics stores visitor IPs for 30 days and honors DNT/GPC in the public client.
+Live provider behavior and deployment configuration must be verified separately
+from local tests. Custom domains, billing, lead capture, and moderation tooling
+are not implemented.

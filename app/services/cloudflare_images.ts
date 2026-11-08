@@ -31,6 +31,27 @@ export default class CloudflareImages {
     return data.result
   }
 
+  /** A missing image is already deleted, including after a retry. */
+  async delete(id: string) {
+    let response: Response
+    try {
+      response = await this.transport(
+        `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(this.accountId)}/images/v1/${encodeURIComponent(id)}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${this.token}` },
+          signal: AbortSignal.timeout(10000),
+        }
+      )
+    } catch {
+      throw new CloudflareImagesError('Image provider unavailable')
+    }
+    if (response.status === 404) return
+    const result = (await response.json().catch(() => null)) as { success?: boolean } | null
+    if (!response.ok || result?.success !== true)
+      throw new CloudflareImagesError('Image deletion failed')
+  }
+
   async createUpload(userId: number) {
     const body = new FormData()
     // Profile photos are public assets; upload allocation remains authenticated.
