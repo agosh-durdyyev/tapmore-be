@@ -89,6 +89,7 @@ router
         router.get('/images', [Images, 'index'])
         router.post('/images/cleanup', [Images, 'cleanup'])
         router.post('/images/uploads', [Images, 'store'])
+        router.post('/images/import', [Images, 'importRemote'])
         router.post('/images/:id/confirm', [Images, 'confirm'])
       })
       .use(middleware.auth())

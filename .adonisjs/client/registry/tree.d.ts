@@ -56,6 +56,7 @@ export interface ApiDefinition {
     index: typeof routes['images.index']
     cleanup: typeof routes['images.cleanup']
     store: typeof routes['images.store']
+    importRemote: typeof routes['images.import_remote']
     confirm: typeof routes['images.confirm']
   }
 }

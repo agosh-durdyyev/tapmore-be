@@ -9,7 +9,11 @@ import { textIssue } from '#services/content_policy'
  * the endpoints can't be used as a general chatbot.
  */
 
-const model = 'claude-opus-5-5'
+/**
+ * One model per job: importing reads a whole web page (web fetch needs Sonnet
+ * or Opus); suggestions are a few short lines, so the small model is plenty.
+ */
+const models = { import: 'claude-sonnet-5-5', suggest: 'claude-haiku-5-5' } as const
 export const templateIds = [
   'creator',
   'designer',
@@ -55,6 +59,7 @@ async function structured(
     system: string
     user: string
     schema: Record<string, unknown>
+    model: keyof typeof models
     effort: 'low' | 'medium'
     maxTokens: number
     webFetch?: boolean
@@ -67,11 +72,13 @@ async function structured(
     let response: Anthropic.Beta.BetaMessage
     try {
       response = await anthropic().beta.messages.create({
-        model,
+        model: models[options.model],
         max_tokens: options.maxTokens,
-        betas: ['server-side-fallback-2026-07-01'],
-        // Opus can decline a request on safety grounds; retry on Anthropic's recommended model.
-        fallbacks: 'default',
+        // Sonnet can decline on safety grounds; retry on Anthropic's recommended
+        // model. Haiku has no server-side fallback, so it sends neither field.
+        ...(options.model === 'import'
+          ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const }
+          : {}),
         system: options.system,
         messages,
         output_config: {
@@ -153,7 +160,21 @@ export interface ImportedPage {
   name: string
   bio: string
   template: (typeof templateIds)[number]
-  links: { title: string; url: string; category: Goal }[]
+  links: { title: string; url: string; category: Goal; display?: 'icon' }[]
+  /** Profile photo on the imported page (Linktree only); copied on sign-in. */
+  avatarUrl?: string
+  /** The imported page's colours, font, and button shape (Linktree only). */
+  appearance?: ImportedAppearance
+}
+export interface ImportedAppearance {
+  version: 1
+  preset: 'clay' | 'paper' | 'sage' | 'editorial' | 'studio' | 'night'
+  background: string
+  text: string
+  buttonBackground: string
+  buttonText: string
+  font: 'modern' | 'editorial' | 'mono'
+  buttonShape: 'rounded' | 'pill' | 'square'
 }
 
 /** Reads an existing page (Linktree, a website, a profile) and returns a starter page. */
@@ -176,6 +197,7 @@ export async function importPage(source: string): Promise<ImportedPage> {
       ].join(' '),
       user: `Page to import: ${source}`,
       schema: importSchema,
+      model: 'import',
       effort: 'medium',
       maxTokens: 16000,
       webFetch: true,
@@ -244,6 +266,7 @@ export async function suggestTitles(input: { url: string; current: string; name:
     ].join(' '),
     user: JSON.stringify({ link: input.url, current_title: input.current, page_owner: input.name }),
     schema: optionsSchema,
+    model: 'suggest',
     effort: 'low',
     maxTokens: 4000,
   })
@@ -272,6 +295,7 @@ export async function suggestBios(input: {
       link_titles: input.links,
     }),
     schema: optionsSchema,
+    model: 'suggest',
     effort: 'low',
     maxTokens: 4000,
   })

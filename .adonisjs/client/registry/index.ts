@@ -194,6 +194,12 @@ const routes = {
     tokens: [[0,"api"],[0,"v1"],[0,"images"],[0,"uploads"]],
     types: placeholder as Registry['images.store']['types'],
   },
+  'images.import_remote': {
+    methods: ["POST"],
+    pattern: '/api/v1/images/import',
+    tokens: [[0,"api"],[0,"v1"],[0,"images"],[0,"import"]],
+    types: placeholder as Registry['images.import_remote']['types'],
+  },
   'images.confirm': {
     methods: ["POST"],
     pattern: '/api/v1/images/:id/confirm',

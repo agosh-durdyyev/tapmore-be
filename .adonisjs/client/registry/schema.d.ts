@@ -411,6 +411,19 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/images_controller').default['store']>>>
     }
   }
+  'images.import_remote': {
+    methods: ["POST"]
+    pattern: '/api/v1/images/import'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/images_controller').default['importRemote']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/images_controller').default['importRemote']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/images_controller').default['importRemote']>>>
+    }
+  }
   'images.confirm': {
     methods: ["POST"]
     pattern: '/api/v1/images/:id/confirm'

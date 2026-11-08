@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { linkActive, validSchedule } from '#services/link_schedule'
+import { orderByClicks, recentClicks } from '#services/smart_order'
 import db from '@adonisjs/lucid/services/db'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import {
@@ -168,11 +169,11 @@ export default class PagesController {
     if (!row) return response.notFound({ code: 'PAGE_NOT_FOUND' })
     const variant = request.qs().experiment === 'off' ? null : await pickVariant(row.id)
     const content = variant ? { ...variant.content, username: row.username } : row.published
+    let links = content.links.filter((link: Parameters<typeof linkActive>[0]) => linkActive(link))
+    // An A/B test compares fixed orders, so smart order waits until it ends.
+    if (content.smartOrder && !variant) links = orderByClicks(links, await recentClicks(row.id))
     return {
-      page: {
-        ...content,
-        links: content.links.filter((link: Parameters<typeof linkActive>[0]) => linkActive(link)),
-      },
+      page: { ...content, links },
       variant: variant?.id ?? null,
     }
   }

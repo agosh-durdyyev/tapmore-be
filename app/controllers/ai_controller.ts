@@ -12,6 +12,7 @@ import {
   suggestTitles,
   templateIds,
 } from '#services/ai'
+import { LinktreeError, importLinktree, linktreeUsername } from '#services/linktree_import'
 
 const importValidator = vine.create({ url: vine.string().trim().maxLength(2048) })
 const suggestValidator = vine.create({
@@ -35,6 +36,9 @@ const hourly = { import: [10, 3], suggest: [60, 15] } as const
 export default class AiController {
   async import(ctx: HttpContext) {
     const { url } = await ctx.request.validateUsing(importValidator)
+    // Linktree pages are read directly: exact, instant, and no model cost.
+    const linktree = linktreeUsername(url)
+    if (linktree) return direct(ctx, () => importLinktree(linktree).then((page) => ({ page })))
     const source = safeLinkUrl(/^https?:\/\//i.test(url) ? url : `https://${url}`)
     if (!source || source.startsWith('mailto:') || isPrivateHost(source))
       return ctx.response.unprocessableEntity({ code: 'INVALID_URL' })
@@ -108,6 +112,24 @@ async function run(
     return await call()
   } catch (error) {
     if (error instanceof AiError) return response.status(error.status).send({ code: error.code })
+    throw error
+  }
+}
+
+/** Imports that skip the model still fetch another site, so they are rate limited too. */
+async function direct({ auth, request, response }: HttpContext, call: () => Promise<object>) {
+  response.header('Cache-Control', 'no-store')
+  const subject = auth.user ? `user:${auth.user.id}` : `ip:${request.ip()}`
+  const result = await hit('import-direct', subject, auth.user ? 30 : 10, 3600)
+  if (!result.ok) {
+    response.header('Retry-After', String(result.retryAfter))
+    return response.status(429).send({ code: 'RATE_LIMITED', signInForMore: !auth.user })
+  }
+  try {
+    return await call()
+  } catch (error) {
+    if (error instanceof LinktreeError)
+      return response.status(error.status).send({ code: error.code })
     throw error
   }
 }

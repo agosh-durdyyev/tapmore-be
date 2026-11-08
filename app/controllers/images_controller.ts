@@ -39,6 +39,42 @@ export default class ImagesController {
       }
     })
   }
+  /**
+   * Copies a profile photo found by a page import into the account's images,
+   * so published pages never load it from the old service. Only Linktree's
+   * photo host is accepted: this must not become a general fetch proxy.
+   */
+  async importRemote({ auth, request, response }: HttpContext) {
+    const url = String(request.input('url') ?? '')
+    let parsed: URL | null = null
+    try {
+      parsed = new URL(url)
+    } catch {}
+    if (
+      !parsed ||
+      parsed.protocol !== 'https:' ||
+      parsed.hostname !== 'ugc.production.linktr.ee' ||
+      url.length > 2048
+    )
+      return response.unprocessableEntity({ code: 'INVALID_URL' })
+    const provider = this.provider()
+    if (!provider) return response.serviceUnavailable({ code: 'IMAGES_NOT_CONFIGURED' })
+    const userId = auth.getUserOrFail().id
+    const count = await db.from('images').where('user_id', userId).count('* as total').first()
+    if (Number(count?.total) >= 50)
+      return response.status(429).send({ code: 'IMAGE_QUOTA_REACHED' })
+    try {
+      const image = await provider.importFromUrl(parsed.href, userId)
+      await db.table('images').insert({ id: image.id, user_id: userId, status: 'ready' })
+      response.header('Cache-Control', 'no-store')
+      return response.created(image)
+    } catch (error) {
+      if (error instanceof CloudflareImagesError)
+        return response.badGateway({ code: 'IMAGE_PROVIDER_UNAVAILABLE' })
+      throw error
+    }
+  }
+
   async confirm({ auth, params, response }: HttpContext) {
     const image = await db
       .from('images')

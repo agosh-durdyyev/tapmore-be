@@ -64,6 +64,26 @@ export default class CloudflareImages {
     return { id: result.id, uploadURL: result.uploadURL }
   }
 
+  /** Copies a public image by address (used for imported profile photos). */
+  async importFromUrl(url: string, userId: number) {
+    const body = new FormData()
+    body.set('url', url)
+    body.set('requireSignedURLs', 'false')
+    body.set('metadata', JSON.stringify({ creator: String(userId), source: 'import' }))
+    const result = await this.call('v1', { method: 'POST', body })
+    const variants = Array.isArray(result.variants) ? result.variants : []
+    const publicUrl =
+      variants.find((value) => typeof value === 'string' && value.endsWith('/public')) ??
+      variants[0]
+    if (
+      typeof result.id !== 'string' ||
+      typeof publicUrl !== 'string' ||
+      !publicUrl.startsWith('https://imagedelivery.net/')
+    )
+      throw new CloudflareImagesError('Invalid image provider response')
+    return { id: result.id, url: publicUrl }
+  }
+
   async isUploaded(id: string) {
     const result = await this.call(`v1/${encodeURIComponent(id)}`)
     return result.draft !== true && typeof result.uploaded === 'string'

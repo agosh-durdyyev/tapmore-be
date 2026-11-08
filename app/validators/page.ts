@@ -62,7 +62,41 @@ const pageFields = () => ({
     .maxLength(2048)
     .url({ protocols: ['http', 'https'], require_protocol: true })
     .optional(),
+  appearance: vine
+    .object({
+      version: vine.literal(1),
+      preset: vine.enum(['clay', 'paper', 'sage', 'editorial', 'studio', 'night']),
+      background: vine
+        .string()
+        .regex(/^#[\da-f]{6}$/i)
+        .toLowerCase(),
+      text: vine
+        .string()
+        .regex(/^#[\da-f]{6}$/i)
+        .toLowerCase(),
+      buttonBackground: vine
+        .string()
+        .regex(/^#[\da-f]{6}$/i)
+        .toLowerCase(),
+      buttonText: vine
+        .string()
+        .regex(/^#[\da-f]{6}$/i)
+        .toLowerCase(),
+      font: vine.enum(['modern', 'editorial', 'mono']),
+      buttonShape: vine.enum(['rounded', 'pill', 'square']),
+    })
+    .optional(),
   theme: vine.enum(['lilac', 'sand', 'mint']),
+  /** Put the links most visitors click first (see services/smart_order). */
+  smartOrder: vine.boolean().optional(),
+  /** Who the page is for; search engines see a Person or an Organization. */
+  kind: vine.enum(['person', 'business']).optional(),
+  /** Language of TapMore's words on the public page (tapmore-fe lib/page-language). */
+  language: vine
+    .enum(['en', 'es', 'fr', 'de', 'pt', 'it', 'ro', 'tr', 'ru', 'uk', 'pl', 'nl'])
+    .optional(),
+  /** Hide the “Made with tapmore” badge; free for everyone. */
+  hideBranding: vine.boolean().optional(),
   links: vine
     .array(
       vine.object({
@@ -71,6 +105,7 @@ const pageFields = () => ({
         url: linkUrl(),
         category: vine.enum(['Explore', 'Learn', 'Shop', 'Connect']),
         featured: vine.boolean(),
+        display: vine.enum(['icon']).optional(),
         visible: vine.boolean(),
         startsAt: vine.string().maxLength(24).optional(),
         endsAt: vine.string().maxLength(24).optional(),

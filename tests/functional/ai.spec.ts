@@ -33,14 +33,14 @@ test.group('AI import and suggestions', (group) => {
   })
 
   test('answers 503 when no API key is configured', async ({ client }) => {
-    const response = await client.post('/api/v1/ai/import').json({ url: 'linktr.ee/lena' })
+    const response = await client.post('/api/v1/ai/import').json({ url: 'lenaokafor.com' })
     response.assertStatus(503)
     response.assertBodyContains({ code: 'AI_NOT_CONFIGURED' })
   })
 
   test('imports a page and keeps only safe, clean, unique links', async ({ client, assert }) => {
     aiOverride.current = () => imported
-    const response = await client.post('/api/v1/ai/import').json({ url: 'linktr.ee/lena' })
+    const response = await client.post('/api/v1/ai/import').json({ url: 'lenaokafor.com' })
     response.assertStatus(200)
     const page = json(response).page
     assert.equal(page.name, 'Lena Okafor')
@@ -74,17 +74,17 @@ test.group('AI import and suggestions', (group) => {
   test('limits signed-out imports per IP but not signed-in users', async ({ client, assert }) => {
     aiOverride.current = () => imported
     for (let i = 0; i < 3; i++) {
-      const response = await client.post('/api/v1/ai/import').json({ url: 'linktr.ee/lena' })
+      const response = await client.post('/api/v1/ai/import').json({ url: 'lenaokafor.com' })
       response.assertStatus(200)
     }
-    const blocked = await client.post('/api/v1/ai/import').json({ url: 'linktr.ee/lena' })
+    const blocked = await client.post('/api/v1/ai/import').json({ url: 'lenaokafor.com' })
     blocked.assertStatus(429)
     assert.isTrue(json(blocked).signInForMore)
     const user = await User.create({ email: 'ai@example.com' })
     const signedIn = await client
       .post('/api/v1/ai/import')
       .loginAs(user)
-      .json({ url: 'linktr.ee/lena' })
+      .json({ url: 'lenaokafor.com' })
     signedIn.assertStatus(200)
   })
 

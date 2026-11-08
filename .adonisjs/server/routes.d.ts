@@ -35,6 +35,7 @@ export type ScannedRoutes = {
     'images.index': { paramsTuple?: []; params?: {} }
     'images.cleanup': { paramsTuple?: []; params?: {} }
     'images.store': { paramsTuple?: []; params?: {} }
+    'images.import_remote': { paramsTuple?: []; params?: {} }
     'images.confirm': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   GET: {
@@ -80,6 +81,7 @@ export type ScannedRoutes = {
     'experiments.stop': { paramsTuple?: []; params?: {} }
     'images.cleanup': { paramsTuple?: []; params?: {} }
     'images.store': { paramsTuple?: []; params?: {} }
+    'images.import_remote': { paramsTuple?: []; params?: {} }
     'images.confirm': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   DELETE: {
