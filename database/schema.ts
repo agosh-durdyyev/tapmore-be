@@ -8,18 +8,7 @@ import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 
 export class AuthAccessTokenSchema extends BaseModel {
-  static $columns = [
-    'abilities',
-    'createdAt',
-    'expiresAt',
-    'hash',
-    'id',
-    'lastUsedAt',
-    'name',
-    'tokenableId',
-    'type',
-    'updatedAt',
-  ] as const
+  static $columns = ['abilities', 'createdAt', 'expiresAt', 'hash', 'id', 'lastUsedAt', 'name', 'tokenableId', 'type', 'updatedAt'] as const
   $columns = AuthAccessTokenSchema.$columns
   @column()
   declare abilities: string
@@ -43,6 +32,53 @@ export class AuthAccessTokenSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class AuthIdentitySchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'provider', 'subject', 'userId'] as const
+  $columns = AuthIdentitySchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare provider: string
+  @column()
+  declare subject: string
+  @column()
+  declare userId: number
+}
+
+export class ExperimentVariantSchema extends BaseModel {
+  static $columns = ['experimentId', 'id', 'label', 'versionId', 'weight'] as const
+  $columns = ExperimentVariantSchema.$columns
+  @column()
+  declare experimentId: number
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare label: string
+  @column()
+  declare versionId: number
+  @column()
+  declare weight: number
+}
+
+export class ExperimentSchema extends BaseModel {
+  static $columns = ['endedAt', 'id', 'name', 'pageId', 'startedAt', 'status'] as const
+  $columns = ExperimentSchema.$columns
+  @column.dateTime()
+  declare endedAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare name: string
+  @column()
+  declare pageId: number
+  @column.dateTime()
+  declare startedAt: DateTime
+  @column()
+  declare status: string
+}
+
 export class ImageSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'status', 'userId'] as const
   $columns = ImageSchema.$columns
@@ -56,17 +92,71 @@ export class ImageSchema extends BaseModel {
   declare userId: number
 }
 
+export class LoginCodeSchema extends BaseModel {
+  static $columns = ['attempts', 'codeHash', 'consumedAt', 'createdAt', 'email', 'expiresAt', 'id'] as const
+  $columns = LoginCodeSchema.$columns
+  @column()
+  declare attempts: number
+  @column()
+  declare codeHash: string
+  @column.dateTime()
+  declare consumedAt: DateTime | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare email: string
+  @column.dateTime()
+  declare expiresAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+}
+
+export class PageEventSchema extends BaseModel {
+  static $columns = ['country', 'createdAt', 'eventId', 'id', 'ip', 'kind', 'linkId', 'linkTitle', 'pageId', 'variantId'] as const
+  $columns = PageEventSchema.$columns
+  @column()
+  declare country: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare eventId: string
+  @column({ isPrimary: true })
+  declare id: bigint | number
+  @column()
+  declare ip: string
+  @column()
+  declare kind: string
+  @column()
+  declare linkId: string | null
+  @column()
+  declare linkTitle: string | null
+  @column()
+  declare pageId: number
+  @column()
+  declare variantId: number | null
+}
+
+export class PageVersionSchema extends BaseModel {
+  static $columns = ['content', 'createdAt', 'id', 'label', 'number', 'pageId', 'source'] as const
+  $columns = PageVersionSchema.$columns
+  @column()
+  declare content: any
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare label: string | null
+  @column()
+  declare number: number
+  @column()
+  declare pageId: number
+  @column()
+  declare source: string
+}
+
 export class PageSchema extends BaseModel {
-  static $columns = [
-    'createdAt',
-    'draft',
-    'id',
-    'published',
-    'publishedAt',
-    'updatedAt',
-    'userId',
-    'username',
-  ] as const
+  static $columns = ['createdAt', 'draft', 'id', 'published', 'publishedAt', 'publishedVersionId', 'revision', 'updatedAt', 'userId', 'username'] as const
   $columns = PageSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -78,12 +168,16 @@ export class PageSchema extends BaseModel {
   declare published: any | null
   @column.dateTime()
   declare publishedAt: DateTime | null
+  @column()
+  declare publishedVersionId: number | null
+  @column()
+  declare revision: number
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
   @column()
   declare userId: number
   @column()
-  declare username: string
+  declare username: string | null
 }
 
 export class RateLimitSchema extends BaseModel {
@@ -109,7 +203,7 @@ export class UserSchema extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
   @column({ serializeAs: null })
-  declare password: string
+  declare password: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

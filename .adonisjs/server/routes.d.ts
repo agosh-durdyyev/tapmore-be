@@ -19,6 +19,13 @@ export type ScannedRoutes = {
     'pages.update': { paramsTuple?: []; params?: {} }
     'pages.publish': { paramsTuple?: []; params?: {} }
     'pages.unpublish': { paramsTuple?: []; params?: {} }
+    'versions.index': { paramsTuple?: []; params?: {} }
+    'versions.store': { paramsTuple?: []; params?: {} }
+    'versions.show': { paramsTuple: [ParamValue]; params: {'number': ParamValue} }
+    'versions.restore': { paramsTuple: [ParamValue]; params: {'number': ParamValue} }
+    'experiments.show': { paramsTuple?: []; params?: {} }
+    'experiments.store': { paramsTuple?: []; params?: {} }
+    'experiments.stop': { paramsTuple?: []; params?: {} }
     'images.store': { paramsTuple?: []; params?: {} }
     'images.confirm': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
@@ -29,6 +36,9 @@ export type ScannedRoutes = {
     'pages.public_page': { paramsTuple: [ParamValue]; params: {'username': ParamValue} }
     'pages.show': { paramsTuple?: []; params?: {} }
     'activity.show': { paramsTuple?: []; params?: {} }
+    'versions.index': { paramsTuple?: []; params?: {} }
+    'versions.show': { paramsTuple: [ParamValue]; params: {'number': ParamValue} }
+    'experiments.show': { paramsTuple?: []; params?: {} }
   }
   HEAD: {
     'profile.profile.show': { paramsTuple?: []; params?: {} }
@@ -37,6 +47,9 @@ export type ScannedRoutes = {
     'pages.public_page': { paramsTuple: [ParamValue]; params: {'username': ParamValue} }
     'pages.show': { paramsTuple?: []; params?: {} }
     'activity.show': { paramsTuple?: []; params?: {} }
+    'versions.index': { paramsTuple?: []; params?: {} }
+    'versions.show': { paramsTuple: [ParamValue]; params: {'number': ParamValue} }
+    'experiments.show': { paramsTuple?: []; params?: {} }
   }
   POST: {
     'auth.passwordless.google': { paramsTuple?: []; params?: {} }
@@ -46,6 +59,10 @@ export type ScannedRoutes = {
     'profile.access_tokens.destroy': { paramsTuple?: []; params?: {} }
     'activity.store': { paramsTuple: [ParamValue]; params: {'username': ParamValue} }
     'pages.publish': { paramsTuple?: []; params?: {} }
+    'versions.store': { paramsTuple?: []; params?: {} }
+    'versions.restore': { paramsTuple: [ParamValue]; params: {'number': ParamValue} }
+    'experiments.store': { paramsTuple?: []; params?: {} }
+    'experiments.stop': { paramsTuple?: []; params?: {} }
     'images.store': { paramsTuple?: []; params?: {} }
     'images.confirm': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }

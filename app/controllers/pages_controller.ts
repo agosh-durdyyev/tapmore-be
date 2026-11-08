@@ -1,6 +1,13 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
-import { pageValidator, reservedUsernames, usernameValidator } from '#validators/page'
+import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
+import {
+  draftValidator,
+  pageValidator,
+  reservedUsernames,
+  usernameValidator,
+} from '#validators/page'
+import { addVersion, checkpoint, latestVersion, sameContent } from '#services/page_versions'
 import { contentIssues, textIssue } from '#services/content_policy'
 
 export default class PagesController {
@@ -16,45 +23,54 @@ export default class PagesController {
     const page = await db.from('pages').where('user_id', auth.getUserOrFail().id).first()
     if (!page) return response.notFound({ code: 'PAGE_NOT_FOUND' })
     response.header('Cache-Control', 'no-store')
-    return { page: page.draft, published: page.published, publishedAt: page.published_at }
+    return {
+      page: page.draft,
+      published: page.published,
+      publishedAt: page.published_at,
+      revision: page.revision,
+    }
   }
 
+  /**
+   * Saves the draft to the account without publishing. Autosave calls this after
+   * each edit with `If-Match: <revision>`; a stale revision means another device
+   * saved first, so the client is asked to choose instead of overwriting.
+   * The address is claimed only when it is free; publishing makes the final claim.
+   */
   async update({ auth, request, response }: HttpContext) {
-    const draft = await request.validateUsing(pageValidator)
+    const draft = await request.validateUsing(draftValidator)
     const issues = contentIssues(draft)
     if (issues.length)
       return response.unprocessableEntity({ code: 'CONTENT_NOT_ALLOWED', errors: issues })
-    if (reservedUsernames.has(draft.username))
-      return response.conflict({ code: 'USERNAME_UNAVAILABLE' })
+    const ifMatch = request.header('if-match')
+    const baseRevision = ifMatch === undefined ? null : Number(ifMatch.replace(/"/g, ''))
     const userId = auth.getUserOrFail().id
-    try {
-      // The unique username index resolves competing claims atomically.
-      await db.transaction(async (trx) => {
-        await trx.from('users').where('id', userId).forUpdate().firstOrFail()
-        const existing = await trx.from('pages').where('user_id', userId).forUpdate().first()
-        const values = { draft: JSON.stringify(draft), updated_at: new Date() }
-        if (existing) {
-          // Published URLs remain stable until an explicit unpublish.
-          if (existing.published && existing.username !== draft.username) {
-            const error = new Error('Unpublish before changing username')
-            Object.assign(error, { code: 'PUBLISHED_USERNAME_LOCKED' })
-            throw error
-          }
-          await trx
-            .from('pages')
-            .where('id', existing.id)
-            .update({ ...values, username: draft.username })
-        } else {
-          await trx.table('pages').insert({ ...values, user_id: userId, username: draft.username })
-        }
-      })
-    } catch (error) {
-      const code = error && typeof error === 'object' && 'code' in error ? error.code : null
-      if (code === '23505') return response.conflict({ code: 'USERNAME_UNAVAILABLE' })
-      if (code === 'PUBLISHED_USERNAME_LOCKED') return response.conflict({ code })
-      throw error
-    }
-    return { page: draft }
+    const result = await db.transaction(async (trx) => {
+      await trx.from('users').where('id', userId).forUpdate().firstOrFail()
+      let row = await trx.from('pages').where('user_id', userId).forUpdate().first()
+      if (row && baseRevision !== null && baseRevision !== row.revision)
+        return { conflict: { page: row.draft, revision: row.revision } }
+      if (row?.published && draft.username !== row.username) return { locked: true as const }
+      if (!row) {
+        const [created] = await trx
+          .table('pages')
+          .insert({ user_id: userId, username: null, draft: JSON.stringify(draft) })
+          .returning('*')
+        row = created
+      }
+      const username = await claimUsername(trx, row, draft.username)
+      const revision = row.revision + 1
+      await trx
+        .from('pages')
+        .where('id', row.id)
+        .update({ draft: JSON.stringify(draft), revision, updated_at: new Date() })
+      await checkpoint(trx, row.id, draft)
+      return { revision, usernameAvailable: !draft.username || username === draft.username }
+    })
+    if ('conflict' in result)
+      return response.conflict({ code: 'DRAFT_CONFLICT', ...result.conflict })
+    if ('locked' in result) return response.conflict({ code: 'PUBLISHED_USERNAME_LOCKED' })
+    return { page: draft, ...result }
   }
 
   async publish({ auth, response }: HttpContext) {
@@ -65,26 +81,55 @@ export default class PagesController {
         .forUpdate()
         .first()
       if (!row) return null
+      if (!row.draft.username) return { error: 'USERNAME_REQUIRED' as const }
       const draft = await pageValidator.validate(row.draft)
       const issues = contentIssues(draft)
       if (issues.length) return { issues }
+      if ((await claimUsername(trx, row, draft.username)) !== draft.username)
+        return { error: 'USERNAME_UNAVAILABLE' as const }
+      const latest = await latestVersion(trx, row.id)
+      const version =
+        latest && sameContent(latest.content, draft)
+          ? latest
+          : await addVersion(trx, row.id, draft, 'publish')
       await trx
         .from('pages')
         .where('id', row.id)
-        .update({ published: JSON.stringify(draft), published_at: new Date() })
-      return { page: draft }
+        .update({
+          published: JSON.stringify(draft),
+          published_version_id: version.id,
+          published_at: new Date(),
+        })
+      return { page: draft, version: version.number }
     })
     if (!result) return response.notFound({ code: 'PAGE_NOT_FOUND' })
     if ('issues' in result)
       return response.unprocessableEntity({ code: 'CONTENT_NOT_ALLOWED', errors: result.issues })
-    return { username: result.page.username, published: true }
+    if ('error' in result)
+      return result.error === 'USERNAME_REQUIRED'
+        ? response.unprocessableEntity({ code: result.error })
+        : response.conflict({ code: result.error })
+    return { username: result.page.username, published: true, version: result.version }
   }
 
   async unpublish({ auth, response }: HttpContext) {
-    const affected = await db
-      .from('pages')
-      .where('user_id', auth.getUserOrFail().id)
-      .update({ published: null, published_at: null })
+    const affected = await db.transaction(async (trx) => {
+      const row = await trx
+        .from('pages')
+        .where('user_id', auth.getUserOrFail().id)
+        .forUpdate()
+        .first()
+      if (!row) return 0
+      // A test cannot outlive the page it splits traffic for.
+      await trx
+        .from('experiments')
+        .where({ page_id: row.id, status: 'running' })
+        .update({ status: 'stopped', ended_at: new Date() })
+      return trx
+        .from('pages')
+        .where('id', row.id)
+        .update({ published: null, published_version_id: null, published_at: null })
+    })
     if (!affected) return response.notFound({ code: 'PAGE_NOT_FOUND' })
     return response.noContent()
   }
@@ -103,7 +148,12 @@ export default class PagesController {
     }
   }
 
-  async publicPage({ params, response }: HttpContext) {
+  /**
+   * The live page, or one variant of a running A/B test chosen at random per
+   * request (no cookie). `?experiment=off` always returns the live page; the
+   * landing site sends it for visitors with Do Not Track or Global Privacy Control.
+   */
+  async publicPage({ params, request, response }: HttpContext) {
     const row = await db
       .from('pages')
       .where('username', String(params.username).toLowerCase())
@@ -111,11 +161,61 @@ export default class PagesController {
       .first()
     response.header('Cache-Control', 'no-store')
     if (!row) return response.notFound({ code: 'PAGE_NOT_FOUND' })
+    const variant = request.qs().experiment === 'off' ? null : await pickVariant(row.id)
+    const content = variant ? { ...variant.content, username: row.username } : row.published
     return {
       page: {
-        ...row.published,
-        links: row.published.links.filter((link: { visible: boolean }) => link.visible),
+        ...content,
+        links: content.links.filter((link: { visible: boolean }) => link.visible),
       },
+      variant: variant?.id ?? null,
     }
   }
+}
+
+/**
+ * Reserves `wanted` for this page when it is free and returns the address the
+ * page now holds. A savepoint keeps a lost race from aborting the outer save.
+ */
+async function claimUsername(
+  trx: TransactionClientContract,
+  row: { id: number; username: string | null; published: unknown },
+  wanted: string
+): Promise<string | null> {
+  if (row.username === wanted) return wanted
+  if (row.published) return row.username
+  if (!wanted) {
+    await trx.from('pages').where('id', row.id).update({ username: null })
+    return null
+  }
+  if (reservedUsernames.has(wanted)) return row.username
+  try {
+    await trx.transaction(async (savepoint) => {
+      await savepoint.from('pages').where('id', row.id).update({ username: wanted })
+    })
+    return wanted
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === '23505')
+      return row.username
+    throw error
+  }
+}
+
+async function pickVariant(pageId: number) {
+  const variants = await db
+    .from('experiment_variants as v')
+    .join('experiments as e', 'e.id', 'v.experiment_id')
+    .join('page_versions as p', 'p.id', 'v.version_id')
+    .where('e.page_id', pageId)
+    .where('e.status', 'running')
+    .orderBy('v.id')
+    .select('v.id', 'v.weight', 'p.content')
+  if (!variants.length) return null
+  const total = variants.reduce((sum, item) => sum + item.weight, 0)
+  let roll = Math.random() * total
+  for (const item of variants) {
+    roll -= item.weight
+    if (roll < 0) return item
+  }
+  return variants[variants.length - 1]
 }

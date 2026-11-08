@@ -47,6 +47,8 @@ router
 const Pages = () => import('#controllers/pages_controller')
 const Images = () => import('#controllers/images_controller')
 const Activity = () => import('#controllers/activity_controller')
+const Versions = () => import('#controllers/versions_controller')
+const Experiments = () => import('#controllers/experiments_controller')
 router
   .group(() => {
     router.get('/usernames/:username', [Pages, 'availability'])
@@ -60,6 +62,15 @@ router
         router.put('/page', [Pages, 'update'])
         router.post('/page/publish', [Pages, 'publish'])
         router.delete('/page/publish', [Pages, 'unpublish'])
+        router.get('/page/versions', [Versions, 'index'])
+        router.post('/page/versions', [Versions, 'store'])
+        router.get('/page/versions/:number', [Versions, 'show']).where('number', /^\d+$/)
+        router
+          .post('/page/versions/:number/restore', [Versions, 'restore'])
+          .where('number', /^\d+$/)
+        router.get('/page/experiment', [Experiments, 'show'])
+        router.post('/page/experiment', [Experiments, 'store'])
+        router.post('/page/experiment/stop', [Experiments, 'stop'])
         router.post('/images/uploads', [Images, 'store'])
         router.post('/images/:id/confirm', [Images, 'confirm'])
       })

@@ -62,11 +62,23 @@ const routes = {
     tokens: [[0,"api"],[0,"v1"],[0,"public"],[0,"pages"],[1,"username"]],
     types: placeholder as Registry['pages.public_page']['types'],
   },
+  'activity.store': {
+    methods: ["POST"],
+    pattern: '/api/v1/public/pages/:username/events',
+    tokens: [[0,"api"],[0,"v1"],[0,"public"],[0,"pages"],[1,"username"],[0,"events"]],
+    types: placeholder as Registry['activity.store']['types'],
+  },
   'pages.show': {
     methods: ["GET","HEAD"],
     pattern: '/api/v1/page',
     tokens: [[0,"api"],[0,"v1"],[0,"page"]],
     types: placeholder as Registry['pages.show']['types'],
+  },
+  'activity.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/api/v1/page/activity',
+    tokens: [[0,"api"],[0,"v1"],[0,"page"],[0,"activity"]],
+    types: placeholder as Registry['activity.show']['types'],
   },
   'pages.update': {
     methods: ["PUT"],
@@ -85,6 +97,48 @@ const routes = {
     pattern: '/api/v1/page/publish',
     tokens: [[0,"api"],[0,"v1"],[0,"page"],[0,"publish"]],
     types: placeholder as Registry['pages.unpublish']['types'],
+  },
+  'versions.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/api/v1/page/versions',
+    tokens: [[0,"api"],[0,"v1"],[0,"page"],[0,"versions"]],
+    types: placeholder as Registry['versions.index']['types'],
+  },
+  'versions.store': {
+    methods: ["POST"],
+    pattern: '/api/v1/page/versions',
+    tokens: [[0,"api"],[0,"v1"],[0,"page"],[0,"versions"]],
+    types: placeholder as Registry['versions.store']['types'],
+  },
+  'versions.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/api/v1/page/versions/:number',
+    tokens: [[0,"api"],[0,"v1"],[0,"page"],[0,"versions"],[1,"number"]],
+    types: placeholder as Registry['versions.show']['types'],
+  },
+  'versions.restore': {
+    methods: ["POST"],
+    pattern: '/api/v1/page/versions/:number/restore',
+    tokens: [[0,"api"],[0,"v1"],[0,"page"],[0,"versions"],[1,"number"],[0,"restore"]],
+    types: placeholder as Registry['versions.restore']['types'],
+  },
+  'experiments.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/api/v1/page/experiment',
+    tokens: [[0,"api"],[0,"v1"],[0,"page"],[0,"experiment"]],
+    types: placeholder as Registry['experiments.show']['types'],
+  },
+  'experiments.store': {
+    methods: ["POST"],
+    pattern: '/api/v1/page/experiment',
+    tokens: [[0,"api"],[0,"v1"],[0,"page"],[0,"experiment"]],
+    types: placeholder as Registry['experiments.store']['types'],
+  },
+  'experiments.stop': {
+    methods: ["POST"],
+    pattern: '/api/v1/page/experiment/stop',
+    tokens: [[0,"api"],[0,"v1"],[0,"page"],[0,"experiment"],[0,"stop"]],
+    types: placeholder as Registry['experiments.stop']['types'],
   },
   'images.store': {
     methods: ["POST"],

@@ -8,6 +8,8 @@ const eventValidator = vine.create({
   eventId: vine.string().uuid(),
   type: vine.enum(['view', 'click']),
   linkId: vine.string().maxLength(100).optional(),
+  /** Set when the visitor was shown a variant of an A/B test. */
+  variantId: vine.number().withoutDecimals().min(1).optional(),
 })
 
 export default class ActivityController {
@@ -19,9 +21,23 @@ export default class ActivityController {
       .whereNotNull('published')
       .first()
     if (!page) return response.notFound({ code: 'PAGE_NOT_FOUND' })
+    // A variant must belong to this page; its links, not the live page's, were shown.
+    const variant = event.variantId
+      ? await db
+          .from('experiment_variants as v')
+          .join('experiments as e', 'e.id', 'v.experiment_id')
+          .join('page_versions as p', 'p.id', 'v.version_id')
+          .where('v.id', event.variantId)
+          .where('e.page_id', page.id)
+          .select('v.id', 'p.content')
+          .first()
+      : null
+    if (event.variantId && !variant)
+      return response.unprocessableEntity({ code: 'VARIANT_NOT_FOUND' })
+    const shown = variant ? variant.content : page.published
     const link =
       event.type === 'click'
-        ? page.published.links.find(
+        ? shown.links.find(
             (value: { id: string; visible: boolean }) => value.id === event.linkId && value.visible
           )
         : null
@@ -38,6 +54,7 @@ export default class ActivityController {
         country: await countryFor(ip),
         link_id: link?.id ?? null,
         link_title: link?.title ?? null,
+        variant_id: variant?.id ?? null,
       })
       .onConflict('event_id')
       .ignore()

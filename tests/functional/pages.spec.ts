@@ -111,14 +111,24 @@ test.group('Page lifecycle', (group) => {
     saved.assertStatus(200)
     const otherDraft = await client.get('/api/v1/page').loginAs(b)
     otherDraft.assertStatus(404)
-    const claim = await client.put('/api/v1/page').loginAs(b).json(page('claimed'))
-    claim.assertStatus(409)
-    const publish = await client.post('/api/v1/page/publish').loginAs(b)
-    publish.assertStatus(404)
+    const noPage = await client.post('/api/v1/page/publish').loginAs(b)
+    noPage.assertStatus(404)
     const unpublish = await client.delete('/api/v1/page/publish').loginAs(b)
     unpublish.assertStatus(404)
+    // The draft still saves; the taken address is just not reserved for b.
+    const claim = await client.put('/api/v1/page').loginAs(b).json(page('claimed'))
+    claim.assertStatus(200)
+    assert.isFalse((claim.body() as { usernameAvailable: boolean }).usernameAvailable)
+    const publish = await client.post('/api/v1/page/publish').loginAs(b)
+    publish.assertStatus(409)
+    publish.assertBodyContains({ code: 'USERNAME_UNAVAILABLE' })
     const reserved = await client.put('/api/v1/page').loginAs(b).json(page('admin'))
-    reserved.assertStatus(409)
+    reserved.assertStatus(200)
+    assert.isFalse((reserved.body() as { usernameAvailable: boolean }).usernameAvailable)
+    const reservedPublish = await client.post('/api/v1/page/publish').loginAs(b)
+    reservedPublish.assertStatus(409)
+    const stillA = await client.get('/api/v1/usernames/claimed')
+    assert.isFalse(stillA.body().available)
     const availability = await client.get('/api/v1/usernames/CLAIMED')
     assert.isFalse(availability.body().available)
     const image = await client.post('/api/v1/images/not-owned/confirm').loginAs(b)
@@ -127,7 +137,13 @@ test.group('Page lifecycle', (group) => {
 
   test('rejects unsafe URLs and invalid backup content', async ({ client }) => {
     const user = await User.create({ email: 'url@example.com', password: 'long-password' })
-    for (const url of ['javascript:alert(1)', 'data:text/html,hello', 'ftp://example.com']) {
+    for (const url of [
+      'javascript:alert(1)',
+      'data:text/html,hello',
+      'ftp://example.com',
+      'mailto:not-an-address',
+      'mailto:a@b.com?bcc=everyone@example.com',
+    ]) {
       const draft = page('validname')
       draft.links[0].url = url
       const response = await client.put('/api/v1/page').loginAs(user).json(draft)
@@ -135,6 +151,15 @@ test.group('Page lifecycle', (group) => {
     }
     const response = await client.put('/api/v1/page').loginAs(user).json({ version: 1, page: {} })
     response.assertStatus(422)
+    const email = page('validname')
+    email.links[0].url = 'mailto:hello@example.com'
+    const mail = await client.put('/api/v1/page').loginAs(user).json(email)
+    mail.assertStatus(200)
+    const mailPhoto = await client
+      .put('/api/v1/page')
+      .loginAs(user)
+      .json({ ...page('validname'), avatarUrl: 'mailto:hello@example.com' })
+    mailPhoto.assertStatus(422)
     const photo = await client
       .put('/api/v1/page')
       .loginAs(user)

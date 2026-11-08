@@ -125,6 +125,19 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/pages_controller').default['publicPage']>>>
     }
   }
+  'activity.store': {
+    methods: ["POST"]
+    pattern: '/api/v1/public/pages/:username/events'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { username: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/activity_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/activity_controller').default['store']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/activity_controller').default['store']>>>
+    }
+  }
   'pages.show': {
     methods: ["GET","HEAD"]
     pattern: '/api/v1/page'
@@ -138,14 +151,27 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/pages_controller').default['show']>>>
     }
   }
+  'activity.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/api/v1/page/activity'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/activity_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/activity_controller').default['show']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/activity_controller').default['show']>>>
+    }
+  }
   'pages.update': {
     methods: ["PUT"]
     pattern: '/api/v1/page'
     types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/page').pageValidator)>>
+      body: ExtractBody<InferInput<(typeof import('#validators/page').draftValidator)>>
       paramsTuple: []
       params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/page').pageValidator)>>
+      query: ExtractQuery<InferInput<(typeof import('#validators/page').draftValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/pages_controller').default['update']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/pages_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/pages_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
@@ -175,6 +201,97 @@ export interface Registry {
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/pages_controller').default['unpublish']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/pages_controller').default['unpublish']>>>
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/pages_controller').default['unpublish']>>>
+    }
+  }
+  'versions.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/api/v1/page/versions'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/versions_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/versions_controller').default['index']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/versions_controller').default['index']>>>
+    }
+  }
+  'versions.store': {
+    methods: ["POST"]
+    pattern: '/api/v1/page/versions'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/versions_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/versions_controller').default['store']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/versions_controller').default['store']>>>
+    }
+  }
+  'versions.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/api/v1/page/versions/:number'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { number: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/versions_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/versions_controller').default['show']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/versions_controller').default['show']>>>
+    }
+  }
+  'versions.restore': {
+    methods: ["POST"]
+    pattern: '/api/v1/page/versions/:number/restore'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/page').draftValidator)>>
+      paramsTuple: [ParamValue]
+      params: { number: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/page').draftValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/versions_controller').default['restore']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/versions_controller').default['restore']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/versions_controller').default['restore']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'experiments.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/api/v1/page/experiment'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/experiments_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/experiments_controller').default['show']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/experiments_controller').default['show']>>>
+    }
+  }
+  'experiments.store': {
+    methods: ["POST"]
+    pattern: '/api/v1/page/experiment'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/experiments_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/experiments_controller').default['store']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/experiments_controller').default['store']>>>
+    }
+  }
+  'experiments.stop': {
+    methods: ["POST"]
+    pattern: '/api/v1/page/experiment/stop'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/experiments_controller').default['stop']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/experiments_controller').default['stop']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/experiments_controller').default['stop']>>>
     }
   }
   'images.store': {

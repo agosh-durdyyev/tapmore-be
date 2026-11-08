@@ -27,6 +27,21 @@ export interface ApiDefinition {
     publish: typeof routes['pages.publish']
     unpublish: typeof routes['pages.unpublish']
   }
+  activity: {
+    store: typeof routes['activity.store']
+    show: typeof routes['activity.show']
+  }
+  versions: {
+    index: typeof routes['versions.index']
+    store: typeof routes['versions.store']
+    show: typeof routes['versions.show']
+    restore: typeof routes['versions.restore']
+  }
+  experiments: {
+    show: typeof routes['experiments.show']
+    store: typeof routes['experiments.store']
+    stop: typeof routes['experiments.stop']
+  }
   images: {
     store: typeof routes['images.store']
     confirm: typeof routes['images.confirm']
