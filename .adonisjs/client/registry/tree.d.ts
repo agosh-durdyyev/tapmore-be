@@ -31,6 +31,10 @@ export interface ApiDefinition {
     store: typeof routes['activity.store']
     show: typeof routes['activity.show']
   }
+  ai: {
+    import: typeof routes['ai.import']
+    suggest: typeof routes['ai.suggest']
+  }
   versions: {
     index: typeof routes['versions.index']
     store: typeof routes['versions.store']

@@ -18,6 +18,11 @@ const bodyParserConfig = defineConfig({
     convertEmptyStringsToNull: false,
 
     /**
+     * The largest valid page (100 links) is about 250 KB of JSON.
+     */
+    limit: '300kb',
+
+    /**
      * Content types handled by the form parser.
      */
     types: ['application/x-www-form-urlencoded'],

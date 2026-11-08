@@ -14,6 +14,8 @@ export type ScannedRoutes = {
     'pages.public_index': { paramsTuple?: []; params?: {} }
     'pages.public_page': { paramsTuple: [ParamValue]; params: {'username': ParamValue} }
     'activity.store': { paramsTuple: [ParamValue]; params: {'username': ParamValue} }
+    'ai.import': { paramsTuple?: []; params?: {} }
+    'ai.suggest': { paramsTuple?: []; params?: {} }
     'pages.show': { paramsTuple?: []; params?: {} }
     'activity.show': { paramsTuple?: []; params?: {} }
     'pages.update': { paramsTuple?: []; params?: {} }
@@ -58,6 +60,8 @@ export type ScannedRoutes = {
     'auth.passwordless.verify_code': { paramsTuple?: []; params?: {} }
     'profile.access_tokens.destroy': { paramsTuple?: []; params?: {} }
     'activity.store': { paramsTuple: [ParamValue]; params: {'username': ParamValue} }
+    'ai.import': { paramsTuple?: []; params?: {} }
+    'ai.suggest': { paramsTuple?: []; params?: {} }
     'pages.publish': { paramsTuple?: []; params?: {} }
     'versions.store': { paramsTuple?: []; params?: {} }
     'versions.restore': { paramsTuple: [ParamValue]; params: {'number': ParamValue} }

@@ -138,6 +138,32 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/activity_controller').default['store']>>>
     }
   }
+  'ai.import': {
+    methods: ["POST"]
+    pattern: '/api/v1/ai/import'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/ai_controller').default['import']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/ai_controller').default['import']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/ai_controller').default['import']>>>
+    }
+  }
+  'ai.suggest': {
+    methods: ["POST"]
+    pattern: '/api/v1/ai/suggest'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/ai_controller').default['suggest']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/ai_controller').default['suggest']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#controllers/ai_controller').default['suggest']>>>
+    }
+  }
   'pages.show': {
     methods: ["GET","HEAD"]
     pattern: '/api/v1/page'

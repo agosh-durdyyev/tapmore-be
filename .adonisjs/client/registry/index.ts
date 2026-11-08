@@ -68,6 +68,18 @@ const routes = {
     tokens: [[0,"api"],[0,"v1"],[0,"public"],[0,"pages"],[1,"username"],[0,"events"]],
     types: placeholder as Registry['activity.store']['types'],
   },
+  'ai.import': {
+    methods: ["POST"],
+    pattern: '/api/v1/ai/import',
+    tokens: [[0,"api"],[0,"v1"],[0,"ai"],[0,"import"]],
+    types: placeholder as Registry['ai.import']['types'],
+  },
+  'ai.suggest': {
+    methods: ["POST"],
+    pattern: '/api/v1/ai/suggest',
+    tokens: [[0,"api"],[0,"v1"],[0,"ai"],[0,"suggest"]],
+    types: placeholder as Registry['ai.suggest']['types'],
+  },
   'pages.show': {
     methods: ["GET","HEAD"],
     pattern: '/api/v1/page',

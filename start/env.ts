@@ -39,6 +39,12 @@ export default await Env.create(new URL('../', import.meta.url), {
   RESEND_API_KEY: Env.schema.secret.optional(),
   MAIL_FROM: Env.schema.string.optional(),
 
+  // AI import and suggestions. Without a key the AI endpoints answer 503.
+  ANTHROPIC_API_KEY: Env.schema.secret.optional(),
+  // Model calls allowed per day across all users, and across signed-out users.
+  AI_DAILY_LIMIT: Env.schema.number.optional(),
+  AI_ANON_DAILY_LIMIT: Env.schema.number.optional(),
+
   // Visitor countries. Defaults to geo/dbip-country-lite.mmdb (see scripts/download_geoip.mjs).
   GEOIP_DB_PATH: Env.schema.string.optional(),
 
