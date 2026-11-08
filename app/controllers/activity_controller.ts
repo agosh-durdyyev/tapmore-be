@@ -83,15 +83,18 @@ export default class ActivityController {
       clicks: Number(totals.clicks),
       uniqueIps: Number(totals.unique_ips),
       links: links.map((row) => ({ id: row.link_id, clicks: Number(row.clicks) })),
-      events: events.map((row) => ({
-        id: String(row.id),
-        type: row.kind,
-        ip: row.ip,
-        country: row.country,
-        linkId: row.link_id,
-        title: row.link_title,
-        at: new Date(row.created_at).toISOString(),
-      })),
+      events: await Promise.all(
+        events.map(async (row) => ({
+          id: String(row.id),
+          type: row.kind,
+          ip: row.ip,
+          // Rows recorded before the GeoIP database existed have no country; look it up now.
+          country: row.country ?? (row.ip ? await countryFor(row.ip) : null),
+          linkId: row.link_id,
+          title: row.link_title,
+          at: new Date(row.created_at).toISOString(),
+        }))
+      ),
     }
   }
 }
