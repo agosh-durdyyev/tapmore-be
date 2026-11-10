@@ -84,7 +84,7 @@ outside the database transaction.
 ## Production operations
 
 Configure explicit CORS origins, trusted proxies, mail, social client IDs, Cloudflare,
-and optional Anthropic credentials using `.env.example`. `/health` checks the
+and optional DeepSeek credentials using `.env.example`. `/health` checks the
 process, not database readiness. Use database TLS, backups, and restore drills.
 Analytics stores visitor IPs for 30 days and honors DNT/GPC in the public client.
 Live provider behavior and deployment configuration must be verified separately

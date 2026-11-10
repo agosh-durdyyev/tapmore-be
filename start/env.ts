@@ -39,8 +39,10 @@ export default await Env.create(new URL('../', import.meta.url), {
   RESEND_API_KEY: Env.schema.secret.optional(),
   MAIL_FROM: Env.schema.string.optional(),
 
-  // AI import and suggestions. Without a key the AI endpoints answer 503.
-  ANTHROPIC_API_KEY: Env.schema.secret.optional(),
+  // AI import and suggestions (DeepSeek). Without a key the AI endpoints answer 503.
+  DEEPSEEK_API_KEY: Env.schema.secret.optional(),
+  DEEPSEEK_MODEL: Env.schema.string.optional(),
+  DEEPSEEK_BASE_URL: Env.schema.string.optional(),
   // Model calls allowed per day across all users, and across signed-out users.
   AI_DAILY_LIMIT: Env.schema.number.optional(),
   AI_ANON_DAILY_LIMIT: Env.schema.number.optional(),
