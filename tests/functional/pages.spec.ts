@@ -104,6 +104,25 @@ test.group('Page lifecycle', (group) => {
     renamed.assertStatus(200)
   })
 
+  test('persists and publishes valid layouts while rejecting unsupported ones', async ({ client, assert }) => {
+    const user = await User.create({ email: 'layout@example.com', password: 'long-password' })
+    const appearance = {
+      version: 1, preset: 'clay', background: '#f1d3c2', text: '#252622',
+      buttonBackground: '#fffefa', buttonText: '#252622', font: 'modern', buttonShape: 'rounded',
+    }
+    for (const layout of ['stack', 'editorial', 'grid']) {
+      const saved = await client.put('/api/v1/page').loginAs(user).json({ ...page('layout-test'), appearance: { ...appearance, layout } })
+      saved.assertStatus(200)
+      const published = await client.post('/api/v1/page/publish').loginAs(user)
+      published.assertStatus(200)
+      const publicPage = await client.get('/api/v1/public/pages/layout-test')
+      publicPage.assertStatus(200)
+      assert.equal(publicPage.body().page.appearance.layout, layout)
+    }
+    const invalid = await client.put('/api/v1/page').loginAs(user).json({ ...page('layout-test'), appearance: { ...appearance, layout: 'unknown' } })
+    invalid.assertStatus(422)
+  })
+
   test('isolates accounts and rejects conflicting username claims', async ({ client, assert }) => {
     const a = await User.create({ email: 'a@example.com', password: 'long-password' })
     const b = await User.create({ email: 'b@example.com', password: 'long-password' })

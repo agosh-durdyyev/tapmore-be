@@ -84,6 +84,7 @@ const pageFields = () => ({
         .toLowerCase(),
       font: vine.enum(['modern', 'editorial', 'mono']),
       buttonShape: vine.enum(['rounded', 'pill', 'square']),
+      layout: vine.enum(['stack', 'editorial', 'grid']).optional(),
     })
     .optional(),
   theme: vine.enum(['lilac', 'sand', 'mint']),
