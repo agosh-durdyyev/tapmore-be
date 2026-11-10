@@ -102,4 +102,72 @@ test.group('Public activity', (group) => {
       .first()
     assert.equal(Number(expired!.count), 0)
   })
+  test('summarizes the whole window beyond the latest 50 events and isolates owners', async ({
+    client,
+    assert,
+  }) => {
+    const owner = await User.create({ email: 'summary@example.com' })
+    const other = await User.create({ email: 'summary-other@example.com' })
+    await client.put('/api/v1/page').loginAs(owner).json(page)
+    const stored = await db.from('pages').where('user_id', owner.id).firstOrFail()
+    const now = new Date()
+    const earlier = new Date(now.getTime() - 2 * 86400000)
+    await db.table('page_events').insert([
+      ...Array.from({ length: 60 }, (_, i) => ({
+        event_id: randomUUID(),
+        page_id: stored.id,
+        kind: 'view',
+        ip: `203.0.113.${i + 1}`,
+        country: i < 40 ? 'DE' : null,
+        created_at: earlier,
+      })),
+      {
+        event_id: randomUUID(),
+        page_id: stored.id,
+        kind: 'click',
+        ip: '203.0.113.1',
+        country: 'DE',
+        link_id: 'work',
+        link_title: 'Original title',
+        created_at: now,
+      },
+      {
+        event_id: randomUUID(),
+        page_id: stored.id,
+        kind: 'view',
+        ip: '203.0.113.200',
+        country: 'RO',
+        created_at: new Date(now.getTime() - 31 * 86400000),
+      },
+    ])
+    const response = await client.get('/api/v1/page/activity').loginAs(owner)
+    response.assertStatus(200)
+    const body = response.body()
+    assert.lengthOf(body.events, 50)
+    assert.equal(body.views, 60)
+    assert.equal(
+      body.daily.reduce((sum: number, day: { views: number }) => sum + day.views, 0),
+      60
+    )
+    assert.equal(
+      body.daily.reduce((sum: number, day: { clicks: number }) => sum + day.clicks, 0),
+      1
+    )
+    assert.deepEqual(
+      body.countries.map((row: { country: string | null; views: number }) => ({
+        country: row.country,
+        views: row.views,
+      })),
+      [
+        { country: 'DE', views: 40 },
+        { country: null, views: 20 },
+      ]
+    )
+    assert.equal(body.links[0].title, 'Original title')
+    assert.isString(body.windowStart)
+    assert.isString(body.windowEnd)
+    const isolated = await client.get('/api/v1/page/activity').loginAs(other)
+    assert.deepEqual(isolated.body().daily, [])
+    assert.deepEqual(isolated.body().countries, [])
+  })
 })

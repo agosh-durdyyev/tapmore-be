@@ -73,12 +73,22 @@ export default class ActivityController {
       clicks: 0,
       uniqueIps: 0,
       links: [],
+      daily: [],
+      countries: [],
+      windowStart: activityCutoff().toISOString(),
+      windowEnd: new Date().toISOString(),
       events: [],
     }
     if (!page) return empty
     await purgeOldActivity()
+    const windowEnd = new Date()
+    const windowStart = activityCutoff()
     const query = () =>
-      db.from('page_events').where('page_id', page.id).where('created_at', '>=', activityCutoff())
+      db
+        .from('page_events')
+        .where('page_id', page.id)
+        .where('created_at', '>=', windowStart)
+        .where('created_at', '<=', windowEnd)
     const totals = await query()
       .select(
         db.raw(
@@ -90,7 +100,24 @@ export default class ActivityController {
       .where('kind', 'click')
       .groupBy('link_id')
       .select('link_id')
+      .select(db.raw('max(link_title) as title'))
       .count('* as clicks')
+    // Aggregate the full retention window, independently of the bounded event log.
+    const daily = await query()
+      .select(db.raw("to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date"))
+      .select(
+        db.raw(
+          "count(*) filter (where kind = 'view') as views, count(*) filter (where kind = 'click') as clicks"
+        )
+      )
+      .groupByRaw("to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')")
+      .orderBy('date')
+    const countries = await query()
+      .where('kind', 'view')
+      .groupBy('country')
+      .select('country')
+      .count('* as views')
+      .orderBy('views', 'desc')
     const events = await query()
       .orderBy('created_at', 'desc')
       .orderBy('id', 'desc')
@@ -101,7 +128,19 @@ export default class ActivityController {
       views: Number(totals.views),
       clicks: Number(totals.clicks),
       uniqueIps: Number(totals.unique_ips),
-      links: links.map((row) => ({ id: row.link_id, clicks: Number(row.clicks) })),
+      links: links.map((row) => ({
+        id: row.link_id,
+        title: row.title,
+        clicks: Number(row.clicks),
+      })),
+      daily: daily.map((row) => ({
+        date: row.date,
+        views: Number(row.views),
+        clicks: Number(row.clicks),
+      })),
+      countries: countries.map((row) => ({ country: row.country, views: Number(row.views) })),
+      windowStart: windowStart.toISOString(),
+      windowEnd: windowEnd.toISOString(),
       events: await Promise.all(
         events.map(async (row) => ({
           id: String(row.id),
